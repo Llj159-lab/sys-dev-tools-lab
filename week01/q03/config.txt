@@ -1,2 +1,2 @@
-mode = safe
-note = reviewed
+mode=safe
+note=reviewed
