@@ -1,0 +1,358 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\hypersetup{
+    hidelinks,
+    unicode=true
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{15pt}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=4,
+    backgroundcolor=\color{gray!8}
+}
+
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+\newcommand{\screenshot}[2]{
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.94\textwidth]{report_assets/practice/#1}
+    \caption{#2}
+\end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \thispagestyle{empty}
+
+    \vspace*{2.6cm}
+
+    \begin{center}
+        {\LARGE\bfseries 系统开发工具基础第二周实验报告\par}
+    \end{center}
+
+    \vspace{4.2cm}
+
+    \begin{center}
+        \begin{tabular}{rl}
+            姓名： & 刘静雅 \\
+            学号： & 24160001055 \\
+            日期： & \today
+        \end{tabular}
+    \end{center}
+
+    \vspace{1.5cm}
+
+    \begin{center}
+        仓库地址：\\
+        \url{https://github.com/Llj159-lab/sys-dev-tools-lab}
+    \end{center}
+\end{titlepage}
+
+\pagenumbering{arabic}
+
+\tableofcontents
+
+\newpage
+
+\section{实验环境与目录结构}
+
+本周实验在 WSL 的 Bash 环境中完成，仓库目录为
+\verb|~/sys-dev-tools-lab/week02|。
+
+本周实验目录结构如下：
+
+\begin{lstlisting}[language=bash]
+week02/
+|-- q05/
+|-- q06/
+|-- q07/
+|-- q08/
+|-- report_assets/
+`-- report.tex
+\end{lstlisting}
+
+实验过程中分别使用了 Shell 后台任务与信号处理、Python 测试与编辑器辅助功能、调试和单元测试，以及性能分析和代码优化等方法。
+
+\section{q05：后台任务、信号处理与清理}
+
+\subsection*{原题}
+
+编写并运行后台任务程序，观察后台任务的运行状态；使用进程管理命令获取进程信息，并通过信号终止任务；编写清理脚本，删除或整理实验过程中产生的临时文件，同时保存标准输出和标准错误输出。
+
+\subsection*{实验目的}
+
+本题主要练习 Shell 中后台任务的启动与管理、进程号的获取、信号的发送，以及清理脚本的编写。实验重点是理解后台任务与当前终端之间的关系，并掌握使用脚本自动完成清理工作的基本方法。
+
+\subsection*{实验步骤}
+
+首先进入 q05 目录：
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/q05
+\end{lstlisting}
+
+然后运行后台任务，并观察任务状态：
+
+\begin{lstlisting}[language=bash]
+bash worker.sh > stdout.log 2> stderr.log &
+jobs -l
+jobs -p
+\end{lstlisting}
+
+其中，符号 \verb|&| 使任务在后台执行；\verb|jobs -l| 可以查看当前 Shell 管理的后台任务及其进程号；\verb|jobs -p| 只输出后台任务的进程号，便于后续操作。
+
+实验中通过进程号向任务发送终止信号：
+
+\begin{lstlisting}[language=bash]
+pid=$(jobs -p | head -n 1)
+kill -TERM "$pid"
+\end{lstlisting}
+
+\verb|TERM| 表示请求进程正常终止。与强制终止相比，这种方式更适合测试程序是否能够执行清理逻辑。
+
+最后运行清理脚本，并查看清理日志：
+
+\begin{lstlisting}[language=bash]
+bash cleanup.sh
+cat cleanup.log
+\end{lstlisting}
+
+\subsection*{实验结果}
+
+实验成功启动了后台任务，并使用 \verb|jobs -l| 和 \verb|jobs -p| 获取了任务信息。随后使用 \verb|kill -TERM| 向后台进程发送终止信号，任务停止运行。清理脚本执行后生成了 \verb|cleanup.log|，标准输出和标准错误分别保存到 \verb|stdout.log| 与 \verb|stderr.log|。
+
+\screenshot{q05_01_start_bg_jobs.png}{启动后台任务并查看任务状态}
+
+\screenshot{q05_02_terminate_cleanup.png}{终止后台任务并执行清理脚本}
+
+\subsection*{分析}
+
+本题说明了后台任务管理与普通前台命令的差异。后台任务启动后不会阻塞当前终端，但仍然属于当前 Shell 的任务管理范围。通过 \verb|jobs| 可以查询任务，通过进程号可以进一步使用 \verb|kill| 发送信号。将标准输出和标准错误分别保存到文件，有助于区分正常运行信息和异常信息。清理脚本则将重复性的文件处理过程自动化，减少了手工操作产生错误的可能性。
+
+\section{q06：编辑器辅助功能与静态检查}
+
+\subsection*{原题}
+
+使用编辑器阅读和修改 Python 项目，完成符号查找、跳转到定义、查找引用和符号重命名等操作；运行静态检查工具，发现并处理未使用的导入或其他代码问题；使用测试命令确认修改没有破坏原有功能。
+
+\subsection*{实验目的}
+
+本题练习现代编辑器在软件开发中的辅助作用。实验内容包括代码导航、符号重命名、引用查找和静态检查。通过这些工具，可以提高阅读代码、定位问题和修改代码的效率。
+
+\subsection*{实验步骤}
+
+首先进入 q06 目录：
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/q06
+\end{lstlisting}
+
+项目包含以下文件：
+
+\begin{itemize}
+    \item \verb|math_utils.py|：数学计算函数；
+    \item \verb|test_math_utils.py|：对应的测试代码；
+    \item \verb|app.py|：调用相关函数的应用代码。
+\end{itemize}
+
+打开项目后，首先在编辑器中使用“查找引用”功能，查看函数或变量在项目中的使用位置。随后使用“跳转到定义”功能，从调用位置跳转到函数的定义位置。
+
+完成符号重命名操作后，需要检查所有引用是否同步更新。该步骤不能只修改一个文件中的文字，因为函数名可能同时出现在实现代码、测试代码和应用代码中。
+
+然后运行静态检查：
+
+\begin{lstlisting}[language=bash]
+ruff check .
+\end{lstlisting}
+
+根据检查结果删除未使用的导入，或修正其他静态问题。最后执行测试：
+
+\begin{lstlisting}[language=bash ]
+pytest -q
+\end{lstlisting}
+
+\subsection*{实验结果}
+
+实验完成了查找引用、跳转定义和符号重命名操作。静态检查能够发现未使用的导入问题，修改后重新执行检查，相关问题得到处理。最后运行 pytest，测试结果通过。
+
+\screenshot{q06_find_references.png}{查找符号引用}
+
+\screenshot{q06_goto_definition.png}{跳转到符号定义}
+
+\screenshot{q06_03_rename_symbol.png}{重命名符号并同步修改引用}
+
+\screenshot{q06_ruff_unused_import.png}{静态检查发现未使用的导入}
+
+\screenshot{q06_final_check.png}{修改后重新执行检查和测试}
+
+\subsection*{分析}
+
+编辑器的代码导航功能可以将源代码中的定义、调用关系和引用位置联系起来。查找引用适合分析修改范围，跳转定义适合快速理解函数实现，符号重命名适合对项目中的标识符进行一致性修改。静态检查可以在运行测试前发现一部分代码质量问题，而 pytest 则从功能角度验证程序行为。将编辑器功能、静态检查和自动化测试结合起来，可以形成较完整的修改验证流程。
+
+\section{q07：调试错误并使用测试验证}
+
+\subsection*{原题}
+
+运行给定的排序程序和测试代码，观察测试失败信息；使用调试工具定位错误原因，修改程序中的缺陷；重新运行测试，确认修复后的程序满足测试要求。
+
+\subsection*{实验目的}
+
+本题主要练习根据测试失败信息定位程序错误，并通过调试和单元测试验证修复结果。实验重点是理解测试用例、错误堆栈和程序实际执行过程之间的关系。
+
+\subsection*{实验步骤}
+
+进入 q07 目录：
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/q07
+\end{lstlisting}
+
+首先直接运行测试：
+
+\begin{lstlisting}[language=bash]
+pytest -q
+\end{lstlisting}
+
+根据测试输出定位失败的测试用例，再打开 \verb|merge_sort.py| 检查归并过程中左右两个子数组的下标访问。
+
+调试时重点观察以下内容：
+
+\begin{itemize}
+    \item 左右两个数组的起始下标；
+    \item 循环条件是否允许访问数组末尾元素；
+    \item 比较左右元素时使用的下标是否对应当前数组；
+    \item 剩余元素复制过程是否完整。
+\end{itemize}
+
+修改程序后重新运行测试：
+
+\begin{lstlisting}[language=bash]
+pytest -q
+\end{lstlisting}
+
+如果所有测试通过，再检查文件内容和最终输出，确认修复没有引入新的问题。
+
+\subsection*{实验结果}
+
+初次运行测试时，排序程序出现测试失败。通过查看失败信息和调试程序执行过程，定位到归并排序实现中的下标访问错误。修改相关代码后，重新运行 pytest，测试全部通过。
+
+\screenshot{q07_before_fix.png}{修复前运行测试的失败结果}
+
+\screenshot{q07_after_fix.png}{修改排序程序后的代码状态}
+
+\screenshot{q07_pytest_pass.png}{修复后测试全部通过}
+
+\subsection*{分析}
+
+调试的关键不是直接修改表面现象，而是根据错误信息确定错误发生的位置，再分析程序状态和控制流程。对于归并排序，需要同时关注左右子数组的边界和元素比较过程。测试用例提供了可重复的验证条件，因此修复代码后可以立即通过同一组测试判断结果。该过程体现了“测试失败、定位原因、修改代码、重新测试”的基本调试闭环。
+
+\section{q08：性能分析与代码优化}
+
+\subsection*{原题}
+
+生成测试数据，分别运行优化前后的单词频率统计程序；使用 \verb|time| 测量运行时间，并使用 Python 性能分析工具定位程序中的主要耗时部分；在保持输出结果一致的前提下完成优化，并比较优化前后的运行结果。
+
+\subsection*{实验目的}
+
+本题练习性能测试和性能分析方法。实验要求先建立可重复的输入数据，再测量优化前的程序性能，使用分析工具定位主要耗时位置，完成优化后再次测量，并验证优化前后输出一致。
+
+\subsection*{实验步骤}
+
+进入 q08 目录并生成测试数据：
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/q08
+python generate_words.py
+wc -w words.txt
+\end{lstlisting}
+
+生成固定规模的输入文件后，先运行优化前的程序两次：
+
+\begin{lstlisting}[language=bash]
+time python wordfreq_slow.py words.txt > before1.out 2> before1.time
+time python wordfreq_slow.py words.txt > before2.out 2> before2.time
+\end{lstlisting}
+
+使用两次运行结果可以减少单次运行波动对判断的影响。随后使用 cProfile 分析优化前程序：
+
+\begin{lstlisting}[language=bash]
+python -m cProfile -s cumulative wordfreq_slow.py words.txt \
+    > profile_before.txt
+\end{lstlisting}
+
+分析报告中的累计时间和调用次数，找出耗时较多的函数。优化时重点检查是否存在重复的线性查找、重复遍历数据或不必要的函数调用。
+
+优化后的程序使用更适合频率统计的数据结构，避免对已经出现的单词重复进行线性搜索，并且没有将输入规模写死在程序逻辑中。
+
+优化后再次运行两次：
+
+\begin{lstlisting}[language=bash]
+time python wordfreq.py words.txt > after1.out 2> after1.time
+time python wordfreq.py words.txt > after2.out 2> after2.time
+\end{lstlisting}
+
+最后比较输出：
+
+\begin{lstlisting}[language=bash]
+diff -u before1.out after1.out
+diff -u before2.out after2.out
+\end{lstlisting}
+
+如果没有输出差异，说明优化前后的结果一致。对两次运行时间进行比较时，可将两次数据排序后取中位数，避免只依据某一次运行结果判断性能。
+
+\subsection*{实验结果}
+
+实验生成了 \verb|words.txt|，并保存了优化前后的运行输出和时间记录。通过 \verb|cProfile| 获得了优化前的性能分析结果，并根据主要耗时位置修改了程序。优化后重新运行程序，输出结果与优化前保持一致。具体运行时间和中位数应以以下文件中的真实数据为准：
+
+\begin{itemize}
+    \item \verb|before1.time|、\verb|before2.time|；
+    \item \verb|after1.time|、\verb|after2.time|；
+    \item \verb|before1.out|、\verb|before2.out|；
+    \item \verb|after1.out|、\verb|after2.out|。
+\end{itemize}
+
+\screenshot{q08_generated_words.png}{生成测试单词数据}
+
+\screenshot{q08_before_time.png}{优化前的运行时间记录}
+
+\screenshot{q08_cprofile_before.png}{优化前的 cProfile 分析结果}
+
+\screenshot{q08_after_time.png}{优化后的运行时间记录}
+
+\screenshot{q08_summary.png}{优化前后结果和时间的比较}
+
+\subsection*{分析}
+
+性能优化应建立在测量和分析的基础上。首先固定输入数据，然后测量程序运行时间，再使用性能分析工具定位主要耗时位置，最后针对具体瓶颈进行修改。优化后不仅要关注运行速度，还要通过输出比较确认程序功能没有改变。q08 的流程体现了“建立基准、定位瓶颈、局部优化、结果验证”的基本性能工程方法。
+
+\section{本周实验小结}
+
+本周实验综合使用了 Shell 和 Python 开发工具。q05 练习了后台任务、进程信号和清理脚本；q06 练习了编辑器中的代码导航、符号重命名、静态检查和测试；q07 通过测试失败信息完成了程序调试；q08 则完成了性能测量、性能分析和代码优化。
+
+本周实验形成了较完整的开发工作流程：先运行程序获得现象，再通过日志、测试或分析工具定位问题，完成修改后重新验证结果。实验结果不只依赖程序能够运行，还需要通过日志、测试输出、性能记录和截图保存可复核的证据。
+
+\end{document}
