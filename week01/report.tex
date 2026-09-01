@@ -1,0 +1,425 @@
+\documentclass[UTF8,a4paper,12pt]{ctexart}
+
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\headheight}{14.5pt}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+\newcommand{\evidence}[2]{
+\begin{figure}[H]
+    \centering
+    \IfFileExists{report_assets/#1}{
+        \includegraphics[width=0.95\linewidth]{report_assets/#1}
+    }{
+        \fbox{\parbox{0.88\linewidth}{\centering 缺少截图：#1}}
+    }
+    \caption{#2}
+\end{figure}
+}
+
+\newcommand{\practicepic}[2]{
+\begin{figure}[H]
+    \centering
+    \IfFileExists{report_assets/practice/#1}{
+        \includegraphics[width=0.95\linewidth]{report_assets/practice/#1}
+    }{
+        \fbox{\parbox{0.88\linewidth}{\centering 缺少截图：#1}}
+    }
+    \caption{#2}
+\end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \thispagestyle{fancy}
+    \centering
+    \vspace*{2.5cm}
+    {\zihao{1}\bfseries 系统开发工具基础第一周实验报告\par}
+    \vspace{3.8cm}
+    {\zihao{3}姓名：刘静雅\par}
+    \vspace{0.45cm}
+    {\zihao{3}学号：24160001055\par}
+    \vspace{0.45cm}
+    {\zihao{3}日期：2026年8月31日\par}
+    \vspace{0.9cm}
+    {\zihao{3}仓库：\url{https://github.com/Llj159-lab/sys-dev-tools-lab}\par}
+    \vfill
+\end{titlepage}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+\section{实验概述}
+
+本次第一周实验围绕类 Unix Shell、Git 版本控制和 LaTeX 文档编辑展开，内容覆盖了文件系统操作、文本处理、分支合并、冲突解决和规范化排版等基础能力。四道课上实验强调“可复现”和“可验证”，课后练习则进一步巩固了 Shell 的基本语法、重定向、条件判断、管道、xargs、curl、jq、awk 等常用工具。
+
+\section{课上实验一：含空格文件名的批量整理}
+
+\subsection*{题目}
+在当前目录新建 \texttt{q01}，并完全使用命令行完成下列任务：创建 \texttt{input/docs} 和 \texttt{input/tmp}；创建 \texttt{input/docs/notes one.txt}（内容为 alpha 和 beta 两行）、\texttt{input/docs/.secret.txt}（内容为 hidden）、\texttt{input/tmp/empty.txt}（空文件）以及 \texttt{input/run.log}（任意两行日志）；显示 \texttt{q01} 的绝对路径，并以长格式列出 \texttt{input} 下全部项目，包含隐藏文件；把 \texttt{input} 下所有 \texttt{.txt} 文件复制到 \texttt{work/<学号>/}，保留相对目录结构并正确处理名称中的空格；将复制后的目录权限设为 750、普通文件权限设为 640；生成 \texttt{inventory.txt}，列出相对路径和字节数。
+
+\subsection*{解析}
+这一题的重点不在命令复杂，而在细节是否准确。含空格文件名必须加引号，隐藏文件必须以点号开头，复制后还要保留目录结构，并检查权限是否按题目要求设置。整个过程的核心是用命令行完成创建、整理、验证三个步骤，而不是依赖手工处理。
+
+\begin{lstlisting}[language=bash]
+mkdir -p input/docs input/tmp
+printf 'alpha\nbeta\n' > "input/docs/notes one.txt"
+printf 'hidden\n' > input/docs/.secret.txt
+touch input/tmp/empty.txt
+echo -e "log line 1\nlog line 2" > input/run.log
+
+pwd
+ls -la input/
+
+find input -type f -name '*.txt' \
+  -exec cp --parents -- '{}' work/24160001055/ \;
+
+find work/24160001055 -type d -exec chmod 750 {} \;
+find work/24160001055 -type f -exec chmod 640 {} \;
+find work/24160001055 -type f -printf '%P %s\n' | sort > inventory.txt
+\end{lstlisting}
+
+\subsection*{结果}
+该题最终应能看到 \texttt{notes one.txt}、\texttt{.secret.txt}、\texttt{empty.txt} 和 \texttt{run.log} 等文件，其中复制目录只保留 \texttt{.txt} 文件，且目录与文件权限分别为 750 和 640。
+
+\evidence{q01_structure.png}{q01 文件结构检查}
+\evidence{q01_permissions_inventory.png}{q01 权限与 inventory 检查}
+
+\section{课上实验二：随机访问日志统计}
+
+\subsection*{题目}
+在 \texttt{q02} 中创建 \texttt{access.csv}，并使用下方给定数据完成日志统计。给定内容为：
+
+\begin{quote}
+\small
+\texttt{timestamp,user,path,status,latency\_ms}
+
+\texttt{09:00:01,alice,/api/users,200,120}
+
+\texttt{09:00:02,bob,/api/orders,500,310}
+
+\texttt{09:00:03,alice,/api/users,503,180}
+
+\texttt{09:00:04,carol,/login,500,90}
+
+\texttt{09:00:05,bob,/api/orders,502,260}
+
+\texttt{09:00:06,dave,/health,200,20}
+
+\texttt{09:00:07,alice,/api/orders,500,420}
+
+\texttt{09:00:08,carol,/api/users,500,150}
+\end{quote}
+
+题目要求：编写 \texttt{analyze.sh}，接收一个 CSV 文件路径；文件不存在时将错误写入 stderr 并返回非零退出码；使用 Shell 管道以及 \texttt{awk}、\texttt{sort}、\texttt{head} 等工具，输出 HTTP 5xx 数量最多的前 2 个 path，按次数降序，次数相同时按 path 字典序；输出全部数据行的平均 \texttt{latency\_ms}，保留两位小数；分别对 \texttt{access.csv} 和一个不存在的文件运行脚本；不得使用 Python、电子表格或手工统计。
+
+\subsection*{解析}
+这一题要求把文本数据拆成多个小步骤处理。先用 \texttt{awk} 过滤 5xx 行并提取 path，再用 \texttt{sort} 和 \texttt{uniq -c} 做计数，最后再按题目要求排序。平均延迟则需要排除表头，只对数据行做求和与计数。脚本还必须考虑异常输入，这是命令行工具是否规范的重要部分。
+
+\begin{lstlisting}[language=bash]
+awk -F, 'NR>1 && $4 ~ /^5/ {print $3}' "$1" |
+sort |
+uniq -c |
+LC_ALL=C sort -k1,1nr -k2,2 |
+head -2
+
+awk -F, 'NR>1 {sum += $5; count++}
+END {printf "%.2f\n", sum/count}' "$1"
+\end{lstlisting}
+
+\subsection*{结果}
+根据给定数据，结果应为 \texttt{/api/orders} 和 \texttt{/api/users}，平均延迟为 193.75 ms。
+
+\evidence{q02_success.png}{q02 正常输入运行结果}
+\evidence{q02_missing_file.png}{q02 不存在文件测试}
+
+\section{课上实验三：制造、解决并解释一次 Git 合并冲突}
+
+\subsection*{题目}
+在 \texttt{q03} 中从零创建一个 Git 仓库，并主动制造、解决一次合并冲突。题目要求：初始化仓库，在 \texttt{main} 创建 \texttt{config.txt}，内容为 \texttt{mode=normal}，并完成初始提交；创建 \texttt{feature-a}，把内容改为 \texttt{mode=safe} 并提交；从初始 \texttt{main} 创建 \texttt{feature-b}，把内容改为 \texttt{mode=fast} 并提交；回到 \texttt{main}，先合并 \texttt{feature-a}，再合并 \texttt{feature-b}；解决冲突时保留 \texttt{mode=safe}，并另加一行 \texttt{note=reviewed}；确认工作区干净，运行 \texttt{git log --all --graph --decorate --oneline} 查看历史。
+
+\subsection*{解析}
+这一题的重点是理解分支从哪里创建、合并在什么顺序发生，以及冲突为什么出现。两个分支修改同一位置时，Git 不能自动判断最终保留哪一版，就会产生冲突。解决冲突并不是简单消除报错，而是要明确最终应保留的内容及其原因。
+
+\begin{lstlisting}[language=bash]
+git init -b main
+printf 'mode=normal\n' > config.txt
+git add config.txt
+git commit -m "初始提交：mode=normal"
+
+git checkout -b feature-a
+printf 'mode=safe\n' > config.txt
+git commit -am "feature-a：修改为 safe 模式"
+
+git checkout main
+git checkout -b feature-b
+printf 'mode=fast\n' > config.txt
+git commit -am "feature-b：修改为 fast 模式"
+\end{lstlisting}
+
+\subsection*{结果}
+最终应保留 \texttt{mode=safe} 和 \texttt{note=reviewed}，并且提交历史应清晰展示分支与合并关系。
+
+\evidence{q03_git_history.png}{q03 Git 分支历史}
+\evidence{q03_final_state.png}{q03 最终文件内容和工作区状态}
+
+\section{课上实验四：修复并构建一页技术说明}
+
+\subsection*{题目}
+将下方模板保存为 \texttt{q04/report.tex}，补全内容并从命令行构建 PDF。
+
+\begin{quote}
+\small
+\texttt{\textbackslash documentclass\{article\}}
+
+\texttt{\textbackslash usepackage\{amsmath\}}
+
+\texttt{\textbackslash begin\{document\}}
+
+\texttt{\textbackslash title\{Tool Report\}}
+
+\texttt{\textbackslash author\{姓名—学号\}}
+
+\texttt{\textbackslash maketitle}
+
+\texttt{\textbackslash section\{Result\}}
+
+\texttt{\% 在此加入公式、表格及正文引用}
+
+\texttt{\textbackslash end\{document\}}
+\end{quote}
+
+题目要求：加入一个带编号和 \texttt{label} 的公式，并在正文中使用 \texttt{ref} 或 \texttt{eqref} 引用；加入一个 2 行 2 列表格，设置 \texttt{caption} 和 \texttt{label}，并在正文中引用该表；使用 \texttt{latexmk -pdf -halt-on-error} 或 \texttt{tectonic} 生成 \texttt{report.pdf}；确认 PDF 能打开，且交叉引用不显示 \texttt{??}。
+
+\subsection*{解析}
+这一题的核心是掌握 LaTeX 的结构化排版方式。公式和表格不是手工编号，而是通过 \texttt{label} 与 \texttt{ref} 自动维护。编译时需要注意交叉引用往往要经过多轮才能正确生成，因此用 \texttt{latexmk} 比单次编译更稳妥。
+
+\begin{lstlisting}[language=TeX]
+公式~\ref{eq:einstein} 展示了质能方程。
+
+\begin{equation}
+E = mc^2
+\label{eq:einstein}
+\end{equation}
+
+表格~\ref{tab:example} 展示了一个简单的2行2列数据。
+\end{lstlisting}
+
+\subsection*{结果}
+最终 PDF 中应能够正常显示公式编号、表格编号和交叉引用，不应出现 \texttt{??}。
+
+\evidence{q04_build.png}{q04 LaTeX 编译与引用检查}
+\evidence{q04_pdf_preview.png}{q04 PDF 预览}
+
+\section{课后练习}
+
+\subsection{练习 1}
+\textbf{题目：} 本课程要求你使用类 Unix 的 Shell，如 Bash 或 ZSH。若你在 Linux 或 macOS 上，无需额外设置。若你在 Windows 上，请确认你用的不是 \texttt{cmd.exe} 或 \texttt{PowerShell}；你可以使用 \url{https://docs.microsoft.com/en-us/windows/wsl/} 或 Linux 虚拟机来获得 Unix 风格的命令行工具。要确认当前 Shell 是否合适，可运行 \texttt{echo \$SHELL}；若输出类似 \texttt{/bin/bash} 或 \texttt{/usr/bin/zsh}，就说明没问题。
+
+\textbf{解析：} 本题是在确认实验环境。Shell 是后续所有练习的基础，如果使用的是不兼容的命令行环境，很多语法、重定向和脚本行为都会不同，因此先确认当前 Shell 是否为 Bash 或 Zsh 是必要步骤。
+
+\practicepic{practice01_shell.png}{练习 1：确认当前 Shell 环境}
+
+\subsection{练习 2}
+\textbf{题目：} \texttt{ls} 的 \texttt{-l} 选项（flag）作用是什么？运行 \texttt{ls -l /} 并观察输出。每一行最前面的 10 个字符分别代表什么？（提示：\texttt{man ls}）
+
+\textbf{解析：} 这一题主要是理解长格式输出。最前面的字符包含文件类型和权限信息，后续字段则与文件所有者、所属组、大小和时间有关。通过实际输出可以把权限位从抽象概念转化为可直接观察的结果。
+
+\practicepic{practice02_ls_l.png}{练习 2：观察 ls -l 输出}
+
+\subsection{练习 3}
+\textbf{题目：} 在命令 \texttt{find ~/Downloads -type f -name "*.zip" -mtime +30} 中，\texttt{*.zip} 是一个 “glob”。什么是 glob？新建一个测试目录并创建一些文件，试试 \texttt{ls *.txt}、\texttt{ls file?.txt}、\texttt{ls \{a,b,c\}.txt} 等模式。参见 Bash 手册中的 \url{https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html}。
+
+\textbf{解析：} glob 是 Shell 层面的文件名模式匹配机制，不是正则表达式。本题通过不同模式的对比，理解 \texttt{*}、\texttt{?} 和花括号展开的区别，有助于后续批量处理文件。
+
+\practicepic{practice03_glob.png}{练习 3：glob 文件名匹配}
+
+\subsection{练习 4}
+\textbf{题目：} \texttt{'单引号'}、\texttt{"双引号"} 和 \texttt{\$'ANSI 引号'} 有什么区别？写一条命令，输出一个同时包含字面量 \texttt{\$}、\texttt{!} 和换行符的字符串。参见 \url{https://www.gnu.org/software/bash/manual/html_node/Quoting.html}。
+
+\textbf{解析：} 单引号保留字面量，双引号允许变量展开，ANSI 引号允许使用转义序列输出换行等特殊字符。理解这三种引用方式，是编写稳定 Shell 脚本的基础。
+
+\practicepic{practice04_quoting.png}{练习 4：Shell 引号规则}
+
+\subsection{练习 5}
+\textbf{题目：} Shell 有三条标准流：stdin（0）、stdout（1）、stderr（2）。运行 \texttt{ls /nonexistent /tmp}，把 stdout 和 stderr 分别重定向到两个文件。你将如何把两者都重定向到同一个文件？参见 \url{https://www.gnu.org/software/bash/manual/html_node/Redirections.html}。
+
+\textbf{解析：} 这一题说明标准输出和标准错误是分开的。将它们分别重定向后，可以更清楚地区分正常信息和错误信息；而将二者合并到同一文件，则适合统一收集日志。
+
+\practicepic{practice05_redirection.png}{练习 5：标准流重定向}
+
+\subsection{练习 6}
+\textbf{题目：} \texttt{\$?} 保存上一条命令的退出状态（0 表示成功）。\texttt{\&\&} 仅在前一条成功时执行后一条；\texttt{||} 仅在前一条失败时执行后一条。写一个一行命令：仅当 \texttt{/tmp/mydir} 不存在时才创建它。参见 \url{https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html}。
+
+\textbf{解析：} Shell 中的条件执行本质上是基于退出状态。本题展示了如何利用 \texttt{||} 实现“如果不存在就创建”的常见写法，这也是自动化脚本里非常常见的模式。
+
+\practicepic{practice06_exit_status.png}{练习 6：退出状态与条件执行}
+
+\subsection{练习 7}
+\textbf{题目：} 为什么 \texttt{cd} 必须是 Shell 内建命令，而不能是独立程序？（提示：想想子进程能影响和不能影响父进程的哪些状态。）
+
+\textbf{解析：} 该题强调进程关系。目录切换属于当前 Shell 的状态变化，如果由独立程序执行，改变的只会是子进程自己的工作目录，父 Shell 不会受到影响，因此 \texttt{cd} 必须由 Shell 自身实现。
+
+\practicepic{practice07_cd_builtin.png}{练习 7：验证 cd 是 Shell 内建命令}
+
+\subsection{练习 8}
+\textbf{题目：} 写一个脚本，接收文件名参数（\texttt{\$1}），用 \texttt{test -f} 或 \texttt{[ -f ... ]} 检查该文件是否存在，并根据结果输出不同提示。参见 \url{https://www.gnu.org/software/bash/manual/html_node/Bash-Conditional-Expressions.html}。
+
+\textbf{解析：} 这是最基础的 Shell 条件判断练习。通过参数 \texttt{\$1} 接收外部输入，再用 \texttt{test -f} 判断文件是否存在，可以把单条命令扩展成可复用脚本。
+
+\begin{lstlisting}[language=bash]
+#!/usr/bin/env bash
+if [ -f "$1" ]; then
+  echo "file exists: $1"
+else
+  echo "file not found: $1"
+fi
+\end{lstlisting}
+
+\practicepic{practice08_check_script.png}{练习 8：文件存在性检查脚本}
+
+\subsection{练习 9}
+\textbf{题目：} 把上一题完成的脚本保存为文件（如 \texttt{check.sh}）。先运行 \texttt{./check.sh somefile}，会发生什么？然后执行 \texttt{chmod +x check.sh} 再试一次。为什么这一步是必须的？（提示：比较 \texttt{chmod} 前后的 \texttt{ls -l check.sh} 输出）
+
+\textbf{解析：} 这一题说明文件内容正确并不等于可以执行。没有执行权限时，Shell 不能把脚本当作程序直接运行；赋予执行权限后，脚本才可以通过 \texttt{./} 调用。
+
+\practicepic{practice09_chmod_exec.png}{练习 9：chmod +x 前后的执行效果}
+
+\subsection{练习 10}
+\textbf{题目：} 在脚本的 \texttt{set} 选项（flag）里加入 \texttt{-x} 会发生什么？写个简单脚本试试并观察输出。参见 \url{https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html}。
+
+\textbf{解析：} \texttt{set -x} 会在执行命令前打印展开后的命令，这对于调试脚本非常有用。它可以帮助定位变量替换、命令替换和分支执行过程中的问题。
+
+\begin{lstlisting}[language=bash]
+#!/usr/bin/env bash
+set -x
+name="week01"
+echo "current practice: $name"
+date +%F
+\end{lstlisting}
+
+\practicepic{practice10_set_x.png}{练习 10：set -x 调试脚本}
+
+\subsection{练习 11}
+\textbf{题目：} 写一条命令，把文件复制为带当天日期的备份文件名（例如 \texttt{notes.txt} → \texttt{notes\_2026-01-12.txt}）。（提示：\texttt{\$(date +\%Y-\%m-\%d)}）参见 \url{https://www.gnu.org/software/bash/manual/html_node/Command-Substitution.html}。
+
+\textbf{解析：} 命令替换可以把命令执行结果嵌入文件名中，这是一种常见的自动备份方式。它使备份文件名自动包含日期，便于归档和查找。
+
+\begin{lstlisting}[language=bash]
+cp notes.txt "notes_$(date +%F).txt"
+\end{lstlisting}
+
+\practicepic{practice11_backup_date.png}{练习 11：日期备份}
+
+
+\subsection{练习 13}
+\textbf{题目：} 使用管道找出你“home 目录”中最常见的 5 种文件扩展名。（提示：组合 \texttt{find}、\texttt{grep}/\texttt{sed}/\texttt{awk}、\texttt{sort}、\texttt{uniq -c} 以及 \texttt{head}）
+
+\textbf{解析：} 这一题综合了文件查找、文本清洗、排序和计数。扩展名统计并不复杂，但能很好地体现管道把多个小工具组合成一个完整分析流程的能力。
+
+\begin{lstlisting}[language=bash]
+find ~ -type f 2>/dev/null |
+sed -n 's/.*\.//p' |
+sort |
+uniq -c |
+sort -nr |
+head -5
+\end{lstlisting}
+
+\practicepic{practice13_ext_top5.png}{练习 13：文件扩展名统计}
+
+\subsection{练习 14}
+\textbf{题目：} \texttt{xargs} 会把 stdin 的每一行转换为命令参数。结合 \texttt{find} 和 \texttt{xargs}（不要用 \texttt{find -exec}），找出目录中所有 \texttt{.sh} 文件，并用 \texttt{wc -l} 统计每个文件行数。加分项：正确处理文件名中的空格。（提示：\texttt{-print0} 和 \texttt{-0}）参见 \url{https://man7.org/linux/man-pages/man1/xargs.1.html}。
+
+\textbf{解析：} 这题的重点是正确处理文件名中的空格。使用 \texttt{-print0} 与 \texttt{-0} 可以让 \texttt{xargs} 按空字符分隔参数，避免普通空格把文件名切碎。
+
+\begin{lstlisting}[language=bash]
+find . -type f -name '*.sh' -print0 |
+xargs -0 -I{} sh -c 'printf "%s: " "$1"; wc -l < "$1"' sh "{}"
+\end{lstlisting}
+
+\practicepic{practice14_xargs_wc.png}{练习 14：xargs 统计 Shell 脚本行数}
+
+
+\subsection{练习 16}
+\textbf{题目：} \texttt{jq} 是处理 JSON 的强大工具。用 curl 获取示例数据 \url{https://microsoftedge.github.io/Demos/json-dummy-data/64KB.json}，再用 \texttt{jq} 提取 version 大于 6 的人员姓名。（提示：先 \texttt{jq .} 看结构；再试 \texttt{jq '.[] | select(...) | .name'}）
+
+\textbf{解析：} 这一题说明结构化数据最好用结构化工具处理。先通过 \texttt{jq .} 熟悉 JSON 结构，再筛选满足条件的记录并取出姓名字段，是 JSON 数据分析的标准流程。
+
+\begin{lstlisting}[language=bash]
+curl -s 'https://microsoftedge.github.io/Demos/json-dummy-data/64KB.json' |
+jq '.[] | select(.version|tonumber > 6) | .name'
+\end{lstlisting}
+
+\practicepic{practice16_jq_filter.png}{练习 16：jq 过滤 JSON 数据}
+
+\subsection{练习 17}
+\textbf{题目：} \texttt{awk} 可以按列值过滤行并改写输出。例如，\texttt{awk '\$3 \~ /pattern/ \{\$4=""; print\}'} 会只输出第三列匹配 \texttt{pattern} 的行，并省略第四列。请写一个 \texttt{awk} 命令：只输出第二列大于 100 的行，并交换第一列和第三列。可用这条命令测试：\begin{lstlisting}[language=bash]
+printf 'a 50 x\nb 150 y\nc 200 z\n' | awk '$2 > 100 {print $3, $2, $1}'
+\end{lstlisting}
+
+\textbf{解析：} \texttt{awk} 非常适合列式文本处理。该题要求按第二列过滤，再重排输出顺序，本质上就是在条件筛选基础上做字段重组。
+
+\begin{lstlisting}[language=bash]
+printf 'a 50 x\nb 150 y\nc 200 z\n' | awk '$2 > 100 {print $3, $2, $1}'
+\end{lstlisting}
+
+\practicepic{practice17_awk_swap.png}{练习 17：awk 条件过滤与列重排}
+
+\subsection{练习 18}
+\textbf{题目：} 拆解讲义中的 \url{https://missing-semester-cn.github.io/2026/course-shell/#shell-%E8%AF%AD%E8%A8%80bash} SSH 日志处理管道：每一步分别做了什么？然后仿照它构建一个管道，从 \texttt{\~/.bash\_history}（或 \texttt{\~/.zsh\_history}）中找出你最常使用的 Shell 命令。
+
+\textbf{解析：} 这一题综合了管道分析、文本清洗、排序和频次统计。通过拆解讲义中的 SSH 日志处理思路，可以理解每一步如何把原始日志逐步压缩成统计结果；再把同样方法迁移到历史命令文件，就能得到自己最常使用的命令分布。
+
+\begin{lstlisting}[language=bash]
+awk '{print $1}' ~/.bash_history | sort | uniq -c | sort -nr | head
+\end{lstlisting}
+
+\practicepic{practice18_history_pipeline.png}{练习 18：Shell 历史命令统计}
+
+\section{Git 提交记录}
+
+本次实验代码、截图和报告均通过 Git 进行管理，并上传到个人仓库：
+
+\begin{quote}
+\url{https://github.com/Llj159-lab/sys-dev-tools-lab}
+\end{quote}
+
+实验过程中应按题目和阶段分多次提交，避免单次全量提交。这样既便于回溯修改过程，也能更清楚地体现每一题的完成状态。
+
+\evidence{git_remote_commits.png}{GitHub 远程仓库与 commit 记录}
+
+\section{实验总结与感悟}
+
+本次第一周实验围绕 Shell、Git 和 LaTeX 三条主线展开，四道课上实验分别对应文件系统整理、文本统计、分支冲突和文档排版，彼此之间形成了完整的工具链训练。通过这些题目可以看到，命令行工具的价值不仅在于单个命令是否熟悉，更在于能否把多个小工具按正确顺序组合起来，形成可复现、可验证的工作流程。
+
+Shell 部分的训练帮助我建立了对路径、权限、重定向、条件判断和管道的整体认识。文件名中包含空格、隐藏文件需要特别处理，标准流需要区分 stdout 和 stderr，脚本需要考虑参数、退出状态与执行权限，这些都是实际使用中最容易出错的地方。通过这些练习，我更加明确了“细节决定可用性”这一点。
+
+Git 和 LaTeX 的练习则分别从版本管理和文档表达两个角度强化了工程化意识。Git 冲突说明分支历史必须清晰，合并结果必须能被准确追溯；LaTeX 则说明结构化写作可以减少手工编号和版面错误，提高报告的规范程度。整体来看，这一周的内容让我对开发工具的理解从“会用命令”推进到了“理解工具如何协作完成任务”。
+
+\end{document}

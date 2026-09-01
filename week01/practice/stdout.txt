@@ -1,0 +1,8 @@
+/tmp:
+gv_report_pdf.0ZipfE
+snap-private-tmp
+systemd-private-6bb8ee13095b406ab6d8f0bc50b61cc4-polkit.service-0eujbs
+systemd-private-6bb8ee13095b406ab6d8f0bc50b61cc4-systemd-logind.service-ebZLIi
+systemd-private-6bb8ee13095b406ab6d8f0bc50b61cc4-systemd-resolved.service-53oBuO
+systemd-private-6bb8ee13095b406ab6d8f0bc50b61cc4-systemd-timesyncd.service-J0RnwI
+systemd-private-6bb8ee13095b406ab6d8f0bc50b61cc4-wsl-pro.service-eOvoLs
