@@ -10,3 +10,12 @@ __pycache__/
 **/report.out
 **/report.toc
 **/report.xdv
+
+# Week 04 practice generated files
+week04/.venv-practice/
+week04/practice/quality-lab/.venv/
+week04/practice/quality-lab/__pycache__/
+week04/practice/quality-lab/htmlcov/
+week04/practice/quality-lab/.coverage
+week04/practice/quality-lab/.pytest_cache/
+week04/practice/quality-lab/.ruff_cache/
