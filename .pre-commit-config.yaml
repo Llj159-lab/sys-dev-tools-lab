@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: week04-ruff-format
+        name: week04 ruff format
+        entry: bash -c 'cd week04/practice/quality-lab && ruff format --check .'
+        language: system
+        pass_filenames: false
+
+      - id: week04-ruff-check
+        name: week04 ruff check
+        entry: bash -c 'cd week04/practice/quality-lab && ruff check .'
+        language: system
+        pass_filenames: false
+
+      - id: week04-pytest
+        name: week04 pytest
+        entry: bash -c 'cd week04/practice/quality-lab && pytest'
+        language: system
+        pass_filenames: false
