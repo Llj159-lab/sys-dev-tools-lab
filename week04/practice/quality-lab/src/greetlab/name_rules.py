@@ -1,4 +1,3 @@
-import os
 def normalize_name(name):
     cleaned = name.strip()
     if not cleaned:
