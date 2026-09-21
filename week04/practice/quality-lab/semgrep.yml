@@ -1,0 +1,8 @@
+rules:
+  - id: dangerous-subprocess-shell
+    languages:
+      - python
+    message: subprocess.Popen must not use shell=True
+    severity: ERROR
+    patterns:
+      - pattern: subprocess.Popen(..., shell=True, ...)
