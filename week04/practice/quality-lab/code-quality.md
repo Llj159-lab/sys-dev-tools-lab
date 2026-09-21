@@ -13,12 +13,12 @@ video:
 
 There are a variety of tools and techniques that support developers in writing high-quality code. In this lecture, we'll cover:
 
-- [Formatting](#formatting)
-- [Linting](#linting)
-- [Testing](#testing)
-- [Pre-commit hooks](#pre-commit-hooks)
-- [Continuous integration](#continuous-integration)
-- [Command runners](#command-runners)
+* [Formatting](#formatting)
+* [Linting](#linting)
+* [Testing](#testing)
+* [Pre-commit hooks](#pre-commit-hooks)
+* [Continuous integration](#continuous-integration)
+* [Command runners](#command-runners)
 
 As a bonus topic, we'll also cover [regular expressions](#regular-expressions), a cross-cutting topic that has applications in code quality (e.g., for running a subset of tests that match a pattern) as well as other domains like IDEs (e.g., for search and replace).
 
@@ -98,33 +98,33 @@ _Regular expressions_, commonly abbreviated as "regex", is a language used to re
 
 To help build intuition, below are some examples of regex patterns. In this lecture, we use [Python regex syntax](https://docs.python.org/3/library/re.html). There are many flavors of regex, with slight variation between them, especially in the more sophisticated functionality. You can use an online regex tester like [regex101](https://regex101.com/) to develop and debug regular expressions.
 
-- `abc` --- matches the literal "abc".
-- `missing|semester` --- matches the string "missing" or the string "semester".
-- `\d{4}-\d{2}-\d{2}` --- matches dates in YYYY-MM-DD format, such as "2026-01-14". Beyond ensuring that the string consists of four digits, a dash, two digits, a dash, and two digits, this does not validate the date, so "2026-01-99" matches this regex pattern too.
-- `.+@.+` --- matches email addresses, strings that contain some text, then an "@", and then some more text. This does only the most basic validation and matches strings like "nonsense@@@email". A regex that matches email addresses with no false positives or negatives [exists](https://pdw.ex-parrot.com/Mail-RFC822-Address.html) but is impractical.
+* `abc` --- matches the literal "abc".
+* `missing|semester` --- matches the string "missing" or the string "semester".
+* `\d{4}-\d{2}-\d{2}` --- matches dates in YYYY-MM-DD format, such as "2026-01-14". Beyond ensuring that the string consists of four digits, a dash, two digits, a dash, and two digits, this does not validate the date, so "2026-01-99" matches this regex pattern too.
+* `.+@.+` --- matches email addresses, strings that contain some text, then an "@", and then some more text. This does only the most basic validation and matches strings like "nonsense@@@email". A regex that matches email addresses with no false positives or negatives [exists](https://pdw.ex-parrot.com/Mail-RFC822-Address.html) but is impractical.
 
 ## Regex syntax
 
 You can find a comprehensive guide to regex syntax in [this documentation](https://docs.python.org/3/library/re.html#regular-expression-syntax) (or one of many other resources available online). Here are some of the basic building blocks:
 
-- `abc` matches the literal string, when the characters have no special meaning (in this example, "abc")
-- `.` matches any single character
-- `[abc]` matches a single character contained in the brackets (in this example, "a", "b", or "c")
-- `[^abc]` matches a single character except those contained in the brackets (e.g., "d")
-- `[a-f]` matches a single character contained in the range indicated in the brackets (e.g., "c", but not "q")
-- `a|b` matches either pattern (e.g., "a" or "b")
-- `\d` matches any digit character (e.g., "3")
-- `\w` matches any word character (e.g., "x")
-- `\b` matches any word _boundary_ (e.g., in the string "missing semester", matches just before the "m", just after the "g", just before the "s", and just after the "r")
-- `(...)` matches the group of a pattern
-- `...?` matches zero or one of a pattern, such as `words?` to match "word" or "words"
-- `...*` matches any number of a pattern, such as `.*` to match any number of any character
-- `...+` matches one or more of a pattern, such as `\d+` to match any non-zero number of digits
-- `...{N}` matches exactly N of a pattern, such as `\d{4}` for 4 digits
-- `\.` matches a literal "."
-- `\\` matches a literal "\\"
-- `^` matches the start of the line
-- `$` matches the end of the line
+* `abc` matches the literal string, when the characters have no special meaning (in this example, "abc")
+* `.` matches any single character
+* `[abc]` matches a single character contained in the brackets (in this example, "a", "b", or "c")
+* `[^abc]` matches a single character except those contained in the brackets (e.g., "d")
+* `[a-f]` matches a single character contained in the range indicated in the brackets (e.g., "c", but not "q")
+* `a|b` matches either pattern (e.g., "a" or "b")
+* `\d` matches any digit character (e.g., "3")
+* `\w` matches any word character (e.g., "x")
+* `\b` matches any word _boundary_ (e.g., in the string "missing semester", matches just before the "m", just after the "g", just before the "s", and just after the "r")
+* `(...)` matches the group of a pattern
+* `...?` matches zero or one of a pattern, such as `words?` to match "word" or "words"
+* `...*` matches any number of a pattern, such as `.*` to match any number of any character
+* `...+` matches one or more of a pattern, such as `\d+` to match any non-zero number of digits
+* `...{N}` matches exactly N of a pattern, such as `\d{4}` for 4 digits
+* `\.` matches a literal "."
+* `\\` matches a literal "\\"
+* `^` matches the start of the line
+* `$` matches the end of the line
 
 ## Capture groups and references
 
