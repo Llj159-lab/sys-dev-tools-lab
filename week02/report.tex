@@ -4,8 +4,6 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{xcolor}
-\usepackage{booktabs}
-\usepackage{array}
 \usepackage{listings}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
@@ -33,7 +31,6 @@
 }
 
 \setlist[itemize]{leftmargin=2em}
-\setlist[enumerate]{leftmargin=2em}
 
 \newcommand{\screenshot}[2]{
 \begin{figure}[H]
@@ -80,8 +77,11 @@
 
 \section{实验环境与目录结构}
 
-本周实验在 WSL 的 Bash 环境中完成，仓库目录为
-\verb|~/sys-dev-tools-lab/week02|。
+本周实验在 WSL 的 Bash 环境中完成，仓库目录为：
+
+\begin{lstlisting}[language=bash]
+~/sys-dev-tools-lab/week02
+\end{lstlisting}
 
 本周实验目录结构如下：
 
@@ -92,30 +92,29 @@ week02/
 |-- q07/
 |-- q08/
 |-- report_assets/
+|   `-- practice/
 `-- report.tex
 \end{lstlisting}
 
 实验过程中分别使用了 Shell 后台任务与信号处理、Python 测试与编辑器辅助功能、调试和单元测试，以及性能分析和代码优化等方法。
 
-\section{q05：后台任务、信号处理与清理}
+\section{课上实验}
 
-\subsection*{原题}
+\subsection{q05：后台任务、信号处理与清理}
 
-编写并运行后台任务程序，观察后台任务的运行状态；使用进程管理命令获取进程信息，并通过信号终止任务；编写清理脚本，删除或整理实验过程中产生的临时文件，同时保存标准输出和标准错误输出。
+\subsubsection*{实验目的}
 
-\subsection*{实验目的}
+本题练习 Shell 后台任务的启动与管理、进程号获取、信号发送以及清理脚本的编写。
 
-本题主要练习 Shell 中后台任务的启动与管理、进程号的获取、信号的发送，以及清理脚本的编写。实验重点是理解后台任务与当前终端之间的关系，并掌握使用脚本自动完成清理工作的基本方法。
+\subsubsection*{实验过程}
 
-\subsection*{实验步骤}
-
-首先进入 q05 目录：
+进入 q05 目录：
 
 \begin{lstlisting}[language=bash]
 cd ~/sys-dev-tools-lab/week02/q05
 \end{lstlisting}
 
-然后运行后台任务，并观察任务状态：
+启动后台任务并保存标准输出和标准错误：
 
 \begin{lstlisting}[language=bash]
 bash worker.sh > stdout.log 2> stderr.log &
@@ -123,81 +122,63 @@ jobs -l
 jobs -p
 \end{lstlisting}
 
-其中，符号 \verb|&| 使任务在后台执行；\verb|jobs -l| 可以查看当前 Shell 管理的后台任务及其进程号；\verb|jobs -p| 只输出后台任务的进程号，便于后续操作。
-
-实验中通过进程号向任务发送终止信号：
+获取进程号并发送终止信号：
 
 \begin{lstlisting}[language=bash]
 pid=$(jobs -p | head -n 1)
 kill -TERM "$pid"
 \end{lstlisting}
 
-\verb|TERM| 表示请求进程正常终止。与强制终止相比，这种方式更适合测试程序是否能够执行清理逻辑。
-
-最后运行清理脚本，并查看清理日志：
+执行清理脚本并查看日志：
 
 \begin{lstlisting}[language=bash]
 bash cleanup.sh
 cat cleanup.log
 \end{lstlisting}
 
-\subsection*{实验结果}
+\subsubsection*{实验结果}
 
-实验成功启动了后台任务，并使用 \verb|jobs -l| 和 \verb|jobs -p| 获取了任务信息。随后使用 \verb|kill -TERM| 向后台进程发送终止信号，任务停止运行。清理脚本执行后生成了 \verb|cleanup.log|，标准输出和标准错误分别保存到 \verb|stdout.log| 与 \verb|stderr.log|。
+实验成功启动了后台任务，并使用 \verb|jobs| 查看了任务状态和进程号。随后使用 \verb|kill -TERM| 向后台任务发送终止信号，任务停止运行。标准输出、标准错误和清理过程分别保存到相应日志文件中。
 
 \screenshot{q05_01_start_bg_jobs.png}{启动后台任务并查看任务状态}
 
 \screenshot{q05_02_terminate_cleanup.png}{终止后台任务并执行清理脚本}
 
-\subsection*{分析}
+\subsubsection*{分析}
 
-本题说明了后台任务管理与普通前台命令的差异。后台任务启动后不会阻塞当前终端，但仍然属于当前 Shell 的任务管理范围。通过 \verb|jobs| 可以查询任务，通过进程号可以进一步使用 \verb|kill| 发送信号。将标准输出和标准错误分别保存到文件，有助于区分正常运行信息和异常信息。清理脚本则将重复性的文件处理过程自动化，减少了手工操作产生错误的可能性。
+本题说明了后台任务不会阻塞当前终端，但仍然属于当前 Shell 的任务管理范围。通过 \verb|jobs| 可以查看任务，通过进程号和 \verb|kill| 可以向进程发送信号。日志重定向和清理脚本提高了实验过程的可复现性。
 
-\section{q06：编辑器辅助功能与静态检查}
+\subsection{q06：编辑器辅助功能与静态检查}
 
-\subsection*{原题}
+\subsubsection*{实验目的}
 
-使用编辑器阅读和修改 Python 项目，完成符号查找、跳转到定义、查找引用和符号重命名等操作；运行静态检查工具，发现并处理未使用的导入或其他代码问题；使用测试命令确认修改没有破坏原有功能。
+本题练习查找引用、跳转到定义、符号重命名、静态检查和自动化测试。
 
-\subsection*{实验目的}
+\subsubsection*{实验过程}
 
-本题练习现代编辑器在软件开发中的辅助作用。实验内容包括代码导航、符号重命名、引用查找和静态检查。通过这些工具，可以提高阅读代码、定位问题和修改代码的效率。
-
-\subsection*{实验步骤}
-
-首先进入 q06 目录：
+进入 q06 目录：
 
 \begin{lstlisting}[language=bash]
 cd ~/sys-dev-tools-lab/week02/q06
 \end{lstlisting}
 
-项目包含以下文件：
+在编辑器中查找函数或变量的引用位置，并从调用位置跳转到定义位置。完成符号重命名后，检查相关文件中的引用是否同步更新。
 
-\begin{itemize}
-    \item \verb|math_utils.py|：数学计算函数；
-    \item \verb|test_math_utils.py|：对应的测试代码；
-    \item \verb|app.py|：调用相关函数的应用代码。
-\end{itemize}
-
-打开项目后，首先在编辑器中使用“查找引用”功能，查看函数或变量在项目中的使用位置。随后使用“跳转到定义”功能，从调用位置跳转到函数的定义位置。
-
-完成符号重命名操作后，需要检查所有引用是否同步更新。该步骤不能只修改一个文件中的文字，因为函数名可能同时出现在实现代码、测试代码和应用代码中。
-
-然后运行静态检查：
+执行静态检查：
 
 \begin{lstlisting}[language=bash]
 ruff check .
 \end{lstlisting}
 
-根据检查结果删除未使用的导入，或修正其他静态问题。最后执行测试：
+修正未使用导入等问题后，运行测试：
 
-\begin{lstlisting}[language=bash ]
+\begin{lstlisting}[language=bash]
 pytest -q
 \end{lstlisting}
 
-\subsection*{实验结果}
+\subsubsection*{实验结果}
 
-实验完成了查找引用、跳转定义和符号重命名操作。静态检查能够发现未使用的导入问题，修改后重新执行检查，相关问题得到处理。最后运行 pytest，测试结果通过。
+实验完成了代码引用查找、定义跳转和符号重命名。静态检查发现了未使用的导入问题，修改后重新检查，代码检查结果正常。最后运行 pytest，测试全部通过。
 
 \screenshot{q06_find_references.png}{查找符号引用}
 
@@ -207,152 +188,564 @@ pytest -q
 
 \screenshot{q06_ruff_unused_import.png}{静态检查发现未使用的导入}
 
-\screenshot{q06_final_check.png}{修改后重新执行检查和测试}
+\screenshot{q06_final_check.png}{修改后重新检查并运行测试}
 
-\subsection*{分析}
+\subsubsection*{分析}
 
-编辑器的代码导航功能可以将源代码中的定义、调用关系和引用位置联系起来。查找引用适合分析修改范围，跳转定义适合快速理解函数实现，符号重命名适合对项目中的标识符进行一致性修改。静态检查可以在运行测试前发现一部分代码质量问题，而 pytest 则从功能角度验证程序行为。将编辑器功能、静态检查和自动化测试结合起来，可以形成较完整的修改验证流程。
+编辑器辅助功能可以提高代码阅读和修改效率。查找引用有助于确定修改范围，跳转定义有助于理解函数实现，符号重命名可以减少手工修改造成的遗漏。静态检查和自动化测试分别从代码质量和功能正确性两个方面验证了修改结果。
 
-\section{q07：调试错误并使用测试验证}
+\subsection{q07：调试排序程序并使用测试验证}
 
-\subsection*{原题}
+\subsubsection*{实验目的}
 
-运行给定的排序程序和测试代码，观察测试失败信息；使用调试工具定位错误原因，修改程序中的缺陷；重新运行测试，确认修复后的程序满足测试要求。
+本题要求运行排序程序和测试代码，根据测试失败信息定位错误，修改程序缺陷，并重新运行测试。
 
-\subsection*{实验目的}
-
-本题主要练习根据测试失败信息定位程序错误，并通过调试和单元测试验证修复结果。实验重点是理解测试用例、错误堆栈和程序实际执行过程之间的关系。
-
-\subsection*{实验步骤}
+\subsubsection*{实验过程}
 
 进入 q07 目录：
 
 \begin{lstlisting}[language=bash]
 cd ~/sys-dev-tools-lab/week02/q07
+pytest -q
 \end{lstlisting}
 
-首先直接运行测试：
+根据测试输出定位错误位置，检查归并排序中左右子数组的下标访问、循环条件和剩余元素复制过程。
+
+修改程序后重新运行：
 
 \begin{lstlisting}[language=bash]
 pytest -q
 \end{lstlisting}
 
-根据测试输出定位失败的测试用例，再打开 \verb|merge_sort.py| 检查归并过程中左右两个子数组的下标访问。
+\subsubsection*{实验结果}
 
-调试时重点观察以下内容：
+初次运行测试时，排序程序出现失败。通过查看测试信息和分析程序执行过程，定位到归并排序中的下标访问错误。修改后重新运行 pytest，所有测试均通过。
 
-\begin{itemize}
-    \item 左右两个数组的起始下标；
-    \item 循环条件是否允许访问数组末尾元素；
-    \item 比较左右元素时使用的下标是否对应当前数组；
-    \item 剩余元素复制过程是否完整。
-\end{itemize}
+\screenshot{q07_before_fix.png}{修复前的测试失败结果}
 
-修改程序后重新运行测试：
-
-\begin{lstlisting}[language=bash]
-pytest -q
-\end{lstlisting}
-
-如果所有测试通过，再检查文件内容和最终输出，确认修复没有引入新的问题。
-
-\subsection*{实验结果}
-
-初次运行测试时，排序程序出现测试失败。通过查看失败信息和调试程序执行过程，定位到归并排序实现中的下标访问错误。修改相关代码后，重新运行 pytest，测试全部通过。
-
-\screenshot{q07_before_fix.png}{修复前运行测试的失败结果}
-
-\screenshot{q07_after_fix.png}{修改排序程序后的代码状态}
+\screenshot{q07_after_fix.png}{修改排序程序后的状态}
 
 \screenshot{q07_pytest_pass.png}{修复后测试全部通过}
 
-\subsection*{分析}
+\subsubsection*{分析}
 
-调试的关键不是直接修改表面现象，而是根据错误信息确定错误发生的位置，再分析程序状态和控制流程。对于归并排序，需要同时关注左右子数组的边界和元素比较过程。测试用例提供了可重复的验证条件，因此修复代码后可以立即通过同一组测试判断结果。该过程体现了“测试失败、定位原因、修改代码、重新测试”的基本调试闭环。
+本题体现了测试驱动调试的基本过程：先通过测试发现问题，再根据错误信息定位程序位置，分析控制流程和数组边界，最后重新运行测试验证修复结果。
 
-\section{q08：性能分析与代码优化}
+\subsection{q08：性能分析与代码优化}
 
-\subsection*{原题}
+\subsubsection*{实验目的}
 
-生成测试数据，分别运行优化前后的单词频率统计程序；使用 \verb|time| 测量运行时间，并使用 Python 性能分析工具定位程序中的主要耗时部分；在保持输出结果一致的前提下完成优化，并比较优化前后的运行结果。
+本题要求生成测试数据，运行优化前后的单词频率统计程序，使用 \verb|time| 测量运行时间，并使用 \verb|cProfile| 定位主要耗时部分。
 
-\subsection*{实验目的}
+\subsubsection*{实验过程}
 
-本题练习性能测试和性能分析方法。实验要求先建立可重复的输入数据，再测量优化前的程序性能，使用分析工具定位主要耗时位置，完成优化后再次测量，并验证优化前后输出一致。
-
-\subsection*{实验步骤}
-
-进入 q08 目录并生成测试数据：
+进入 q08 目录并生成数据：
 
 \begin{lstlisting}[language=bash]
 cd ~/sys-dev-tools-lab/week02/q08
 python generate_words.py
 wc -w words.txt
+sha256sum words.txt
 \end{lstlisting}
 
-生成固定规模的输入文件后，先运行优化前的程序两次：
+运行优化前程序：
 
 \begin{lstlisting}[language=bash]
-time python wordfreq_slow.py words.txt > before1.out 2> before1.time
-time python wordfreq_slow.py words.txt > before2.out 2> before2.time
+/usr/bin/time -f '%e' -o before1.time \
+    python wordfreq_slow.py > before1.out
+
+/usr/bin/time -f '%e' -o before2.time \
+    python wordfreq_slow.py > before2.out
 \end{lstlisting}
 
-使用两次运行结果可以减少单次运行波动对判断的影响。随后使用 cProfile 分析优化前程序：
+使用 cProfile 分析：
 
 \begin{lstlisting}[language=bash]
-python -m cProfile -s cumulative wordfreq_slow.py words.txt \
-    > profile_before.txt
+python -m cProfile -s cumulative wordfreq_slow.py \
+    | tee profile_before.txt
 \end{lstlisting}
 
-分析报告中的累计时间和调用次数，找出耗时较多的函数。优化时重点检查是否存在重复的线性查找、重复遍历数据或不必要的函数调用。
-
-优化后的程序使用更适合频率统计的数据结构，避免对已经出现的单词重复进行线性搜索，并且没有将输入规模写死在程序逻辑中。
-
-优化后再次运行两次：
+运行优化后的程序：
 
 \begin{lstlisting}[language=bash]
-time python wordfreq.py words.txt > after1.out 2> after1.time
-time python wordfreq.py words.txt > after2.out 2> after2.time
+/usr/bin/time -f '%e' -o after1.time \
+    python wordfreq.py > after1.out
+
+/usr/bin/time -f '%e' -o after2.time \
+    python wordfreq.py > after2.out
 \end{lstlisting}
 
-最后比较输出：
+比较输出：
 
 \begin{lstlisting}[language=bash]
 diff -u before1.out after1.out
 diff -u before2.out after2.out
 \end{lstlisting}
 
-如果没有输出差异，说明优化前后的结果一致。对两次运行时间进行比较时，可将两次数据排序后取中位数，避免只依据某一次运行结果判断性能。
+\subsubsection*{实验结果}
 
-\subsection*{实验结果}
+如下图所示，\verb|words.txt| 中共有 30000 个单词。优化前两次运行时间均为 0.21 s，优化后两次运行时间均为 0.02 s。
 
-实验生成了 \verb|words.txt|，并保存了优化前后的运行输出和时间记录。通过 \verb|cProfile| 获得了优化前的性能分析结果，并根据主要耗时位置修改了程序。优化后重新运行程序，输出结果与优化前保持一致。具体运行时间和中位数应以以下文件中的真实数据为准：
+cProfile 结果显示，优化前程序共有 1012 次函数调用，累计耗时为 0.185 s，其中 \verb|wordfreq_slow.py| 主流程累计耗时为 0.183 s。
+
+优化前后的程序输出均为：
+
+\begin{lstlisting}
+count=1000
+\end{lstlisting}
+
+因此，优化过程没有改变程序的输出结果。
+
+两次运行时间的中位数及加速比为：
 
 \begin{itemize}
-    \item \verb|before1.time|、\verb|before2.time|；
-    \item \verb|after1.time|、\verb|after2.time|；
-    \item \verb|before1.out|、\verb|before2.out|；
-    \item \verb|after1.out|、\verb|after2.out|。
+    \item 优化前中位数：0.210000 s；
+    \item 优化后中位数：0.020000 s；
+    \item 性能提升：10.50 倍。
 \end{itemize}
 
-\screenshot{q08_generated_words.png}{生成测试单词数据}
+\screenshot{q08_generated_words.png}{生成 30000 个测试单词}
 
-\screenshot{q08_before_time.png}{优化前的运行时间记录}
+\screenshot{q08_before_time.png}{优化前两次运行结果和时间}
 
 \screenshot{q08_cprofile_before.png}{优化前的 cProfile 分析结果}
 
-\screenshot{q08_after_time.png}{优化后的运行时间记录}
+\screenshot{q08_after_time.png}{优化后两次运行结果和时间}
 
-\screenshot{q08_summary.png}{优化前后结果和时间的比较}
+\screenshot{q08_summary.png}{优化前后运行时间中位数及加速比}
 
-\subsection*{分析}
+\subsubsection*{分析}
 
-性能优化应建立在测量和分析的基础上。首先固定输入数据，然后测量程序运行时间，再使用性能分析工具定位主要耗时位置，最后针对具体瓶颈进行修改。优化后不仅要关注运行速度，还要通过输出比较确认程序功能没有改变。q08 的流程体现了“建立基准、定位瓶颈、局部优化、结果验证”的基本性能工程方法。
+优化前程序两次运行均需要 0.21 s，优化后均只需要 0.02 s。在测试数据和程序输出保持一致的情况下，运行时间减少了约 90.5\%，整体性能提升约 10.50 倍。
 
-\section{本周实验小结}
+本题采用了建立性能基准、使用分析工具定位瓶颈、修改程序并验证输出的流程。实验表明，性能优化必须建立在实际测量基础上，同时还要确认优化没有改变程序功能。
 
-本周实验综合使用了 Shell 和 Python 开发工具。q05 练习了后台任务、进程信号和清理脚本；q06 练习了编辑器中的代码导航、符号重命名、静态检查和测试；q07 通过测试失败信息完成了程序调试；q08 则完成了性能测量、性能分析和代码优化。
+\section{课后练习}
 
-本周实验形成了较完整的开发工作流程：先运行程序获得现象，再通过日志、测试或分析工具定位问题，完成修改后重新验证结果。实验结果不只依赖程序能够运行，还需要通过日志、测试输出、性能记录和截图保存可复核的证据。
+\subsection{参数与 Glob}
+
+\subsubsection*{题目}
+
+练习命令参数、特殊参数和 Glob 模式，观察不同模式对文件名的匹配效果。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice
+mkdir -p q01
+cd q01
+
+touch a.txt b.txt c.txt file1.txt file2.txt file10.txt notes.md
+
+ls *.txt
+ls file?.txt
+ls {a,b,c}.txt
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|*.txt| 可以匹配任意长度的文件名，\verb|file?.txt| 中的问号匹配一个字符，\verb|{a,b,c}.txt| 会展开为三个具体文件名。Glob 和花括号展开都发生在 Shell 执行命令之前，但二者的语义不同。
+
+\screenshot{practice01_glob.png}{Glob 模式匹配结果}
+
+\subsection{使用 ls 查看文件信息}
+
+\subsubsection*{题目}
+
+阅读 \verb|man ls|，写出一个命令，使其包含隐藏文件、以易读格式显示文件大小、按最近修改时间排序并显示颜色。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice
+ls -lahtr --color=auto
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|-a| 显示隐藏文件，\verb|-h| 以易读格式显示文件大小，\verb|-t| 按修改时间排序，\verb|-r| 反向排序，\verb|--color=auto| 根据终端环境显示颜色。
+
+\screenshot{practice02_ls_l.png}{ls 命令参数组合结果}
+
+\subsection{进程替换}
+
+\subsubsection*{题目}
+
+练习进程替换，使用 \verb|diff| 比较两个命令输出，并分析 \verb|printenv| 与 \verb|export| 输出不同的原因。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice
+diff <(printenv | sort) <(export -p | sort)
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|<(command)| 会把命令输出提供为类似文件的输入，使 \verb|diff| 可以直接比较两个命令的输出。由于 \verb|printenv| 和 \verb|export -p| 的输出格式和内容范围不同，因此比较结果可能存在差异。
+
+\screenshot{practice03_process_substitution.png}{进程替换和 diff 比较结果}
+
+\subsection{marco 与 polo}
+
+\subsubsection*{题目}
+
+编写两个 Bash 函数 \verb|marco| 和 \verb|polo|。执行 \verb|marco| 时保存当前工作目录，执行 \verb|polo| 时返回该目录。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice
+mkdir -p q04
+cd q04
+
+cat > marco.sh <<'EOF'
+marco() {
+    export MARCO_PWD="$PWD"
+}
+
+polo() {
+    cd "$MARCO_PWD"
+}
+EOF
+
+source marco.sh
+
+cd /tmp
+marco
+cd /
+polo
+pwd
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|marco| 将当前目录保存到环境变量，\verb|polo| 读取该变量并执行 \verb|cd|。必须使用 \verb|source| 将函数加载到当前 Shell 中，否则函数无法改变当前终端的工作目录。
+
+\screenshot{practice04_marco_polo.png}{marco 和 polo 函数测试结果}
+
+\subsection{返回码与标准流}
+
+\subsubsection*{题目}
+
+编写一个可能偶尔失败的 Bash 脚本，将标准输出和标准错误分别保存到文件，并记录脚本失败前运行的次数。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice
+
+cat > debug.sh <<'EOF'
+#!/usr/bin/env bash
+
+n=$(( RANDOM % 100 ))
+
+if [[ $n -eq 42 ]]; then
+    echo "Something went wrong"
+    echo "The error was using magic numbers" >&2
+    exit 1
+fi
+
+echo "Everything went according to plan"
+EOF
+
+chmod +x debug.sh
+
+count=0
+while true; do
+    count=$((count + 1))
+    ./debug.sh > stdout.txt 2> stderr.txt || break
+done
+
+echo "failed after $count runs"
+cat stdout.txt
+cat stderr.txt
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+脚本成功时返回码为 0，失败时通过 \verb|exit 1| 返回非零状态。标准输出重定向到 \verb|stdout.txt|，标准错误重定向到 \verb|stderr.txt|。循环中的 \verb|break| 在脚本失败后结束循环。
+
+\screenshot{practice05_return_code.png}{返回码、标准输出和标准错误结果}
+
+\subsection{信号与任务控制}
+
+\subsubsection*{题目}
+
+在终端里启动一个 \verb|sleep 10000| 任务，用 \verb|Ctrl-Z| 把它挂起，再用 \verb|bg| 让它继续在后台运行。然后使用 \verb|pgrep| 找到它的 PID，并使用 \verb|pkill| 将它终止，整个过程不要手动输入 PID。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice/q06
+
+sleep 10000
+\end{lstlisting}
+
+按下 \verb|Ctrl-Z|，然后执行：
+
+\begin{lstlisting}[language=bash]
+bg
+jobs -l
+pgrep -af 'sleep 10000'
+pkill -f 'sleep 10000'
+pgrep -af 'sleep 10000' || echo "sleep 10000 has been killed"
+jobs
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|Ctrl-Z| 会暂停前台任务，\verb|bg| 会使暂停任务在后台继续运行。\verb|pgrep -af| 按完整命令行查找进程，\verb|pkill -f| 按完整命令行匹配并终止进程，因此不需要手工输入 PID。
+
+\screenshot{practice06_job_control.png}{后台任务、进程查找和进程终止}
+
+\subsection{wait 与 pidwait}
+
+\subsubsection*{题目}
+
+启动一个后台进程，等待它结束后再执行其他命令。然后编写一个 \verb|pidwait| Bash 函数，接收一个 PID，并一直等待该进程结束。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~/sys-dev-tools-lab/week02/practice/q06
+
+sleep 5 &
+pid=$!
+echo "started pid=$pid"
+
+wait "$pid"
+echo "sleep finished"
+ls
+\end{lstlisting}
+
+编写 \verb|pidwait| 函数：
+
+\begin{lstlisting}[language=bash]
+cat > pidwait.sh <<'EOF'
+#!/usr/bin/env bash
+
+pidwait() {
+    local pid="$1"
+
+    while kill -0 "$pid" 2>/dev/null; do
+        sleep 1
+    done
+}
+EOF
+
+source pidwait.sh
+
+sleep 5 &
+pid=$!
+
+echo "waiting for pid=$pid"
+pidwait "$pid"
+echo "pid finished"
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|$!| 表示最近启动的后台进程的 PID，\verb|wait| 等待当前 Shell 启动的后台子进程结束。\verb|kill -0| 不会真正终止进程，只用于检测进程是否存在。循环中的 \verb|sleep 1| 可以避免持续占用 CPU。
+
+\screenshot{practice07_pidwait.png}{wait 和 pidwait 的运行结果}
+
+\subsection{SSH 密钥生成}
+
+\subsubsection*{题目}
+
+进入 \verb|~/.ssh/|，检查是否已经存在 SSH 密钥。如果没有，使用 \verb|ssh-keygen -a 100 -t ed25519| 生成密钥。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~
+ls -la ~/.ssh
+ssh-keygen -a 100 -t ed25519
+ls -la ~/.ssh
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|id_ed25519| 是私钥，不能泄露；\verb|id_ed25519.pub| 是公钥，可以复制到远程服务器。SSH 公钥认证可以减少密码登录，并提高远程登录的安全性。
+
+\screenshot{practice08_ssh_keygen.png}{检查并生成 SSH 密钥}
+
+\subsection{SSH 配置文件}
+
+\subsubsection*{题目}
+
+编辑 \verb|~/.ssh/config|，配置远程虚拟机别名、用户名、IP 地址、私钥路径和端口转发规则。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~
+nano ~/.ssh/config
+\end{lstlisting}
+
+配置内容：
+
+\begin{lstlisting}
+Host vm
+    User username_goes_here
+    HostName ip_goes_here
+    IdentityFile ~/.ssh/id_ed25519
+    LocalForward 9999 localhost:8888
+\end{lstlisting}
+
+然后执行：
+
+\begin{lstlisting}[language=bash]
+chmod 600 ~/.ssh/config
+ssh -G vm | head
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+配置主机别名后，可以使用 \verb|ssh vm| 连接远程机器。 \verb|LocalForward| 为后续本地端口转发实验提供配置，权限设置可以避免其他用户读取 SSH 配置。
+
+\screenshot{practice09_ssh_config.png}{SSH 配置文件及配置检查}
+
+\subsection{ssh-copy-id}
+
+\subsubsection*{题目}
+
+使用 \verb|ssh-copy-id vm| 将 SSH 公钥复制到远程服务器，并测试密钥登录。
+
+\subsubsection*{操作步骤}
+
+\begin{lstlisting}[language=bash]
+cd ~
+ssh-copy-id vm
+ssh vm
+whoami
+hostname
+exit
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|ssh-copy-id| 会将本机公钥写入远程服务器的 \verb|authorized_keys| 文件。复制成功后，SSH 客户端可以使用本机私钥完成身份验证。
+
+\screenshot{practice10_ssh_copy_id.png}{复制 SSH 公钥并测试登录}
+
+\subsection{SSH 本地端口转发}
+
+\subsubsection*{题目}
+
+在虚拟机中运行 \verb|python -m http.server 8888|，然后在本机访问 \verb|http://localhost:9999|，验证 SSH 本地端口转发。
+
+\subsubsection*{操作步骤}
+
+在远程虚拟机中运行：
+
+\begin{lstlisting}[language=bash]
+mkdir -p ~/webtest
+cd ~/webtest
+echo "hello from vm" > index.html
+python -m http.server 8888
+\end{lstlisting}
+
+在本机浏览器中访问：
+
+\begin{lstlisting}
+http://localhost:9999
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+SSH 会将本机的 9999 端口转发到远程机器的 8888 端口。因此访问本机的 9999 端口时，实际访问的是远程虚拟机中的 Web 服务。
+
+\screenshot{practice11_port_forward_terminal.png}{远程虚拟机中的 Web 服务}
+
+\screenshot{practice11_port_forward_browser.png}{本机浏览器访问端口转发服务}
+
+\subsection{mosh 连接与断网恢复}
+
+\subsubsection*{题目}
+
+在虚拟机中安装 \verb|mosh| 并建立连接，然后断开网络并恢复，观察连接是否能够继续使用。
+
+\subsubsection*{操作过程}
+
+在本机和虚拟机中安装 mosh：
+
+\begin{lstlisting}[language=bash]
+sudo apt update
+sudo apt install -y mosh
+\end{lstlisting}
+
+建立连接：
+
+\begin{lstlisting}[language=bash]
+mosh vm
+hostname
+whoami
+\end{lstlisting}
+
+建立连接后暂时断开网络，恢复网络后再次观察终端状态。
+
+\subsubsection*{实验结果}
+
+图28为断网前的终端状态，系统显示为 Ubuntu 24.04.3 LTS，主机名为 \verb|LAPTOP-20PGDGAI|，当前用户为 \verb|luoyue|，IPv4 地址为 \verb|172.25.85.135|。随后执行 \verb|hostname| 和 \verb|whoami|，分别得到主机名和用户名，说明断网前终端连接正常。
+
+\screenshot{practice13_mosh_1.png}{断网前的 mosh 终端状态}
+
+图29记录了网络恢复后的终端状态，恢复后仍然可以执行 \verb|hostname| 和 \verb|whoami|，输出仍为 \verb|LAPTOP-20PGDGAI| 和 \verb|luoyue|。同时，IPv4 地址仍为 \verb|172.25.85.135|，说明恢复后的环境仍保持一致。
+
+与断网连接前相比，系统进程数从 58 变为 61，系统负载仍为 0.03。这种变化属于系统运行过程中进程数量的正常波动，并不影响主机名、用户名和终端操作结果。
+
+\screenshot{practice13_mosh_2.png}{网络恢复后的 mosh 终端状态}
+
+\subsubsection*{分析}
+
+如图所示，断网前后使用的是同一台 Ubuntu WSL 环境，主机名、用户名和 IPv4 地址均保持一致，恢复后终端仍然能够执行命令。这说明网络恢复后实验环境能够继续使用。
+
+
+\subsection{ssh 的 -N 和 -f 参数}
+
+\subsubsection*{题目}
+
+查询 SSH 命令中的 \verb|-N| 和 \verb|-f| 参数含义，并写出一条能够实现后台端口转发的命令。
+
+\subsubsection*{操作步骤}
+
+查询参数：
+
+\begin{lstlisting}[language=bash]
+man ssh
+ssh -h 2>&1 | grep -E -- '-N|-f'
+\end{lstlisting}
+
+建立后台端口转发：
+
+\begin{lstlisting}[language=bash]
+ssh -N -f -L 9999:localhost:8888 vm
+\end{lstlisting}
+
+查看后台 SSH 进程：
+
+\begin{lstlisting}[language=bash]
+pgrep -af 'ssh.*9999'
+\end{lstlisting}
+
+停止端口转发：
+
+\begin{lstlisting}[language=bash]
+pkill -f 'ssh.*9999'
+\end{lstlisting}
+
+\subsubsection*{分析}
+
+\verb|-N| 表示不执行远程命令，只建立 SSH 连接，通常用于端口转发。\verb|-f| 表示认证完成后将 SSH 进程放入后台运行。二者结合后，可以在不占用当前交互式终端的情况下建立后台端口转发。
+
+\screenshot{practice14_ssh_nf.png}{ssh 的 -N 和 -f 参数及后台端口转发}
+
+\section{解题感悟}
+
+通过本周课上实验，掌握了 Shell 后台任务管理、进程信号、标准流重定向以及清理脚本的基本方法。同时，通过 Python 项目的静态检查、单元测试和调试实验，进一步理解了代码导航、错误定位和测试验证在软件开发过程中的作用。q08 的性能实验还说明，程序优化应建立在实际测量和性能分析的基础上，不能仅凭主观判断修改代码。
+
+课后练习进一步扩展了对 Shell 机制和远程开发工具的认识。通过 Glob、进程替换、环境变量、返回码和任务控制等练习，掌握了命令组合和脚本自动化的基本思路；通过 SSH 密钥、配置文件、公钥复制、端口转发、mosh 以及后台 SSH 连接等练习，了解了远程登录和远程服务访问的常用方法。整体实验过程强化了“先观察现象、再分析原因、最后验证结果”的问题解决方法。
 
 \end{document}

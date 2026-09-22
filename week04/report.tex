@@ -29,7 +29,9 @@
   tabsize=4
 }
 
-\emergencystretch=3em
+% listings does not provide JSON by default; define it explicitly so the
+% JSON example remains portable across TeX Live installations.
+\lstdefinelanguage{json}{}
 
 \newcommand{\screenshot}[2]{
 \begin{figure}[H]
@@ -87,7 +89,7 @@ week04/
 
 \section{课上实验}
 
-\subsection{第13题 建立可执行的本地质量门禁}
+\subsection{第13题： 建立可执行的本地质量门禁}
 
 \subsubsection*{题目原文}
 
@@ -126,23 +128,26 @@ pytest
 
 \screenshot{practice13_code.png}{第13题 pyproject.toml 中的 pytest 与 ruff 配置}
 
-截图显示，项目在 \verb|pyproject.toml| 中配置了 pytest 的
+实验完成后，\verb|pyproject.toml| 中已经配置了 pytest 的
 \verb|pythonpath| 与 \verb|testpaths|，并设置了 ruff 的目标 Python 版本、
 行长度和检查规则。这些配置使质量检查可以在项目目录中稳定执行。
 
 \screenshot{practice13_quality_pass.png}{第13题 pytest、ruff format 与 ruff check 通过}
 
-截图显示，pytest 共收集两个测试项目，最终结果为 ``2 passed''。随后
-\texttt{ruff format --check .} 显示全部文件格式正确，\texttt{ruff check} 显示
+执行检查命令后，pytest 共收集两个测试项目，最终结果为 ``2 passed''。随后
+\begin{lstlisting}[language=bash]
+ruff format --check .
+\end{lstlisting}
+显示全部文件格式正确，\verb|ruff check| 显示
 ``All checks passed!''，说明测试、格式与静态检查均通过。
 
 \screenshot{practice13_check_sh.png}{第13题 check.sh 执行结果与退出码}
 
-截图显示，\verb|check.sh| 成功执行了格式检查、静态检查和测试，最后
+执行 \verb|check.sh| 后，格式检查、静态检查和测试均成功完成，最后
 \verb|echo $?| 输出为 0。返回值 0 表明该质量门禁脚本执行成功，可在提交前
 作为统一检查入口使用。
 
-\subsection{第14题 让 Make 只重建真正受影响的产物}
+\subsection{第14题： 让 Make 只重建真正受影响的产物}
 
 \subsubsection*{题目原文}
 
@@ -181,10 +186,9 @@ open("report.txt", "w").write(f"{text}\nTotal: {total}\n")
 
 \subsubsection*{实验步骤}
 
-本题先创建数据文件 \nolinkurl{data.csv}、统计脚本 \nolinkurl{stats.py}、
-报告生成脚本 \nolinkurl{build_report.py} 以及报告标题文件
-\nolinkurl{report.md}。其中，\nolinkurl{stats.py} 用于计算 CSV 文件中数值列的总和，
-\nolinkurl{build_report.py} 用于
+本题先创建数据文件 \verb|data.csv|、统计脚本 \verb|stats.py|、报告生成脚本
+\verb|build_report.py| 以及报告标题文件 \verb|report.md|。其中，
+\verb|stats.py| 用于计算 CSV 文件中数值列的总和，\verb|build_report.py| 用于
 读取统计结果并生成最终报告。
 
 随后编写 Makefile，明确目标文件之间的依赖关系。其核心内容如下：
@@ -212,9 +216,9 @@ clean:
 
 \screenshot{practice14_first_make.png}{第14题首次 make 构建及生成结果}
 
-首次执行 \verb|make| 时，终端依次运行 \texttt{python3 stats.py} 和
-\texttt{python3 build\_report.py}。生成的 \nolinkurl{stats.txt} 内容为 10，
-\nolinkurl{report.txt} 中包含报告标题和 ``Total: 10''，说明数据统计与报告生成均成功完成。
+首次执行 \verb|make| 时，终端依次运行 \verb|python3 stats.py| 和
+\verb|python3 build_report.py|。生成的 \verb|stats.txt| 内容为 10，
+\verb|report.txt| 中包含报告标题和 ``Total: 10''，说明数据统计与报告生成均成功完成。
 
 \screenshot{practice14_no_rebuild.png}{第14题第二次 make 未重复构建}
 
@@ -224,9 +228,9 @@ clean:
 
 \screenshot{practice14_rebuild_after_touch.png}{第14题更新 data.csv 后重新构建}
 
-执行 \texttt{touch data.csv} 后再次运行 \verb|make|，终端重新执行
-\nolinkurl{stats.py} 与 \nolinkurl{build_report.py}。这是因为数据文件的时间戳更新后，
-\nolinkurl{stats.txt} 以及依赖它的 \nolinkurl{report.txt} 都需要重新生成。
+执行 \verb|touch data.csv| 后再次运行 \verb|make|，终端重新执行
+\verb|stats.py| 与 \verb|build_report.py|。这是因为数据文件的时间戳更新后，
+\verb|stats.txt| 以及依赖它的 \verb|report.txt| 都需要重新生成。
 
 \screenshot{practice14_clean.png}{第14题 make clean 清理结果}
 
@@ -234,7 +238,7 @@ clean:
 随后列出的目录文件中仅保留 Makefile、源数据文件、Python 脚本和 Markdown 文件，
 说明 clean 目标只清理生成物，没有删除源文件。
 
-\subsection{第15题 把本地 API 数据转换为可读报告}
+\subsection{第15题： 把本地 API 数据转换为可读报告}
 
 \subsubsection*{题目原文}
 
@@ -282,13 +286,13 @@ gamma 的下载量同为 450，因此按照名称升序排列，最终顺序为 
 
 \screenshot{practice15_curl_jq.png}{第15题 curl 获取本地 JSON 数据}
 
-截图显示，\verb|curl -fsS http://127.0.0.1:8000/packages.json| 能够成功访问
+执行 \verb|curl -fsS http://127.0.0.1:8000/packages.json| 后，命令能够成功访问
 本地 HTTP 服务，jq 将 JSON 数据格式化输出。该结果说明本地 API 服务和数据文件
 均可正常访问。
 
 \screenshot{practice15_script.png}{第15题 api\_report.sh 脚本内容}
 
-截图显示，脚本使用 \verb|set -euo pipefail| 保证命令执行出现错误时立即停止。
+脚本使用 \verb|set -euo pipefail| 保证命令执行出现错误时立即停止。
 脚本通过 curl 获取 JSON，再使用 jq 筛选 active 状态且 downloads 不少于 100 的
 记录，并将结果写入 \verb|summary.md|。
 
@@ -297,7 +301,7 @@ gamma 的下载量同为 450，因此按照名称升序排列，最终顺序为 
 生成的 Markdown 报告包含 name、version、downloads 三列，最终保留
 delta、gamma 和 alpha 三条记录。结果中的排序符合下载量降序、名称升序的要求。
 
-\subsection{第16题 修复并交付一个陌生的小型工具仓库}
+\subsection{第16题： 修复并交付一个陌生的小型工具仓库}
 
 \subsubsection*{题目原文}
 
@@ -346,7 +350,7 @@ clean:
 
 \screenshot{practice16_intentional_fail.png}{第16题故意修改问候语后测试失败}
 
-截图显示，将问候语临时修改为固定文本 \verb|Hello, name!| 后，正常姓名测试失败。
+将问候语临时修改为固定文本 \verb|Hello, name!| 后，重新运行测试，正常姓名测试失败。
 测试期望输出为 \verb|Hello, Ada!|，但实际输出为 \verb|Hello, name!|，因此触发
 断言错误。该结果说明已有测试能够有效发现功能回归。
 
@@ -357,24 +361,167 @@ clean:
 
 \screenshot{practice16_makefile.png}{第16题 Makefile 内容}
 
-截图显示，Makefile 中定义了 \verb|check|、\verb|build| 和 \verb|clean| 三个目标。
+Makefile 中定义了 \verb|check|、\verb|build| 和 \verb|clean| 三个目标。
 其中 check 调用 \verb|check.sh|，build 调用 \verb|python -m build|，clean 用于删除
 构建产生的 build、dist 和 egg-info 文件夹。
 
 \screenshot{practice16_make_build.png}{第16题 make build 构建过程}
 
-截图显示，\verb|make build| 成功调用 \verb|python -m build|，并完成源码包构建流程。
+执行 \verb|make build| 后，命令成功调用 \verb|python -m build|，并完成源码包构建流程。
 构建过程中出现 README 文件缺失的警告，但没有导致构建中断，后续仍成功生成了发布产物。
 
 \screenshot{practice16_build_sha256.png}{第16题 wheel 构建完成并计算 SHA-256}
 
-截图显示，构建过程最终成功生成 \verb|.tar.gz| 与 \verb|.whl| 文件。随后使用
+构建过程最终成功生成 \verb|.tar.gz| 与 \verb|.whl| 文件。随后使用
 \verb|sha256sum dist/*.whl| 输出 wheel 文件的 SHA-256 校验值。该值可用于验证
 构建产物的完整性，便于后续提交与交付时进行核验。
 
+\section{课后练习}
+
+本部分按照实际完成的十个练习记录实验过程。每题先列出题目要求，再说明实验方法，最后结合运行结果进行分析。练习均在独立的质量实践项目中完成，相关配置位于仓库的 \verb|week04/practice/quality-lab| 目录。
+
+\subsection{代码格式化、静态检查与 AI 修复}
+\subsubsection*{题目原文}
+为正在进行的项目配置格式化器、linter 和 AI agent。自动格式化应当能够处理格式错误；对于 linter 错误，要求 AI agent 运行 linter 并根据结果迭代修复。修复完成后需要人工检查改动，确认代码功能没有被破坏。
+
+\subsubsection*{实验步骤与分析}
+在质量实践项目中安装 Ruff，先执行以下检查命令并记录原始结果：
+\begin{lstlisting}[language=bash]
+ruff format --check .
+ruff check .
+\end{lstlisting}
+随后把检查信息和修复目标交给 AI agent，要求它运行相同的检查命令，只修改必要文件。修复结束后再次执行检查，并用 \verb|git diff| 人工核对改动范围。自动格式化适合处理缩进、换行等机械性问题，而 linter 提示仍需结合代码语义确认。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice01_ruff_before_ai.png}{课后练习一：AI 修复前的 Ruff 检查}
+\screenshot{practice01_ai_fix_and_review.png}{课后练习一：AI 修复后的检查与人工复核}
+初始检查能够定位格式和静态检查问题；修复后再次运行 Ruff，检查通过，差异内容集中在格式调整和 linter 指出的代码位置。这说明 AI agent 能够参与修复循环，但最终结果仍需人工复核。
+
+\subsection{提交前自动检查}
+\subsubsection*{题目原文}
+为项目配置 pre-commit 钩子，使提交前自动运行格式化检查、linter 和测试。
+
+\subsubsection*{实验步骤与分析}
+在项目根目录创建 \verb|.pre-commit-config.yaml|，将格式检查、静态检查和测试配置为本地钩子。安装 Git 钩子并检查全部文件：
+\begin{lstlisting}[language=bash]
+pre-commit install
+pre-commit run --all-files
+\end{lstlisting}
+这样可以把原本需要手动执行的质量检查接入提交流程。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice02_precommit_pass.png}{课后练习二：pre-commit 全部检查通过}
+全量检查完成后，格式检查、静态检查和测试均通过。结果表明，pre-commit 能够在提交前统一执行质量检查，减少遗漏手工检查的可能。
+
+\subsection{pytest 单元测试}
+\subsubsection*{题目原文}
+学习一种熟悉语言的测试库，并为正在进行的项目编写一个单元测试，运行测试并根据结果判断程序行为是否符合预期。
+
+\subsubsection*{实验步骤与分析}
+在现有 Python 项目中补充 pytest 测试，分别覆盖正常输入、边界输入和无效输入，并通过断言验证函数返回值或命令行输出。执行 \verb|pytest -v|，确认测试文件被正确收集，并根据失败信息修正实现或测试条件。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice03_unit_test.png}{课后练习三：pytest 单元测试结果}
+测试命令返回成功，说明测试文件被正确识别，断言全部成立。正常输入和异常输入分别验证了主要功能路径与错误处理路径。
+
+\subsection{覆盖率统计与 HTML 报告}
+\subsubsection*{题目原文}
+运行代码覆盖率工具并生成 HTML 格式报告，观察哪些代码行已经被测试覆盖，找出尚未覆盖的代码位置。
+
+\subsubsection*{实验步骤与分析}
+使用以下命令同时生成终端统计与 HTML 报告：
+\begin{lstlisting}[language=bash]
+pytest --cov=greetlab \
+  --cov-report=term-missing \
+  --cov-report=html
+\end{lstlisting}
+先查看终端中的覆盖率和缺失行，再打开 HTML 报告定位具体文件和代码行，为后续补充测试提供依据。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice04_coverage_initial.png}{课后练习四：初始覆盖率统计}
+\screenshot{practice04_html_initial.png}{课后练习四：HTML 覆盖率报告}
+初始覆盖率为 94\%，HTML 报告标出了尚未执行的代码行。覆盖率不能直接证明程序没有错误，但能够明确指出测试没有涉及的路径。
+
+\subsection{人工补充测试与覆盖率提升}
+\subsubsection*{题目原文}
+根据覆盖率报告中未覆盖的代码行，手动编写测试以提高覆盖率，并重新运行测试确认新增测试有效。
+
+\subsubsection*{实验步骤与分析}
+根据 HTML 报告定位未覆盖分支，分析这些分支对应的输入条件，然后在测试文件中补充针对性的边界测试或异常测试。重新运行带覆盖率的 pytest，并检查新增测试是否包含有效断言，而不是只为了执行代码。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice05_manual_coverage.png}{课后练习五：补充测试后的覆盖率结果}
+补充测试后，原先未执行的分支被实际运行，测试仍然全部通过，覆盖率得到提高。这说明提高覆盖率的关键是覆盖新的行为路径，而不是单纯增加测试数量。
+
+\subsection{AI agent 辅助测试改进}
+\subsubsection*{题目原文}
+使用 AI agent 提高项目覆盖率。要求 agent 以带覆盖率的方式运行测试，生成逐行覆盖率结果，并根据结果补充测试；同时人工判断 AI 生成的测试是否合理。
+
+\subsubsection*{实验步骤与分析}
+将带有逐行覆盖率的测试结果提供给 AI agent，要求它先运行以下命令，再根据缺失行提出并实现测试：
+\begin{lstlisting}[language=bash]
+pytest --cov=greetlab \
+  --cov-report=term-missing
+\end{lstlisting}
+生成测试后重新运行覆盖率命令，并检查测试是否验证真实行为，是否包含清晰断言。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice06_ai_coverage.png}{课后练习六：AI agent 辅助补充测试后的覆盖率}
+AI agent 根据覆盖率结果补充了测试，重新运行后测试通过且覆盖率得到改善。人工检查确认新增测试具有实际输入和断言，说明 AI 可以提高编写效率，但不能替代测试设计与复核。
+
+\subsection{GitHub Actions 持续集成}
+\subsubsection*{题目原文}
+为项目设置持续集成，使其在每次 push 时运行格式化检查、lint 和测试。
+
+\subsubsection*{实验步骤与分析}
+在 \verb|.github/workflows/week04-quality.yml| 中配置 push 触发的工作流，指定 Python 版本，安装项目依赖，并依次执行格式检查、Ruff 检查和带覆盖率的 pytest。提交并推送后，在 GitHub Actions 页面查看运行状态。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice07_ci_pass.png}{课后练习七：GitHub Actions 检查通过}
+推送后，工作流完成环境准备、依赖安装、格式检查、lint 和测试，最终运行成功。这表明项目在干净的远程环境中也能通过质量检查。
+
+\subsection{持续集成失败与恢复}
+\subsubsection*{题目原文}
+故意破坏代码，例如引入一条 linter 违规，确认持续集成能够捕获问题；随后修复错误并再次推送，确认 CI 恢复成功。
+
+\subsubsection*{实验步骤与分析}
+先在代码中加入一条可检测的 lint 违规，提交并推送，观察 CI 是否在质量检查阶段失败。随后撤销该错误，再次运行本地检查并推送修复结果，比较两次工作流状态。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice08_ci_failure.png}{课后练习八：故意引入问题后的 CI 失败}
+\screenshot{practice08_ci_recovered.png}{课后练习八：修复问题后的 CI 恢复}
+引入 lint 违规后，CI 检查失败；修复并重新推送后，工作流恢复通过。前后结果证明工作流实际执行了质量检查，而不是只创建了配置文件。
+
+\subsection{正则检查与 Markdown 替换}
+\subsubsection*{题目原文}
+写一个正则表达式，使用 grep 查找代码中 \verb|subprocess.Popen(..., shell=True)| 的出现位置，再破坏正则模式，比较 grep 与 Semgrep 的匹配能力。同时在 Markdown 文档中使用正则查找替换，将项目符号 \verb|-| 替换为 \verb|*|，但不能误改其他用途的短横线。
+
+\subsubsection*{实验步骤与分析}
+先在测试文件中写入单行和跨行的危险调用，使用 \verb|grep -nE| 检查简单模式，再使用 Semgrep 规则进行结构化匹配。随后使用 \verb|^(\s*)-\s+| 查找行首项目符号，并将捕获的缩进保留后替换为星号。该限制条件可以避免误改普通文本中的连字符。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice09_grep_semgrep.png}{课后练习九：grep 与 Semgrep 检查危险调用}
+\screenshot{practice09_markdown_replace.png}{课后练习九：Markdown 项目符号正则替换}
+grep 能匹配同一行的危险调用，但对跨行写法不够稳定；Semgrep 根据语法结构识别危险调用。Markdown 替换只处理行首项目符号，保留了普通文本中的短横线。
+
+\subsection{JSON 字段提取与解析器}
+\subsubsection*{题目原文}
+写一个正则表达式，从形如 \verb|{"name": "Alyssa P. Hacker", "college": "MIT"}| 的 JSON 结构中捕获 name。处理 name 中包含转义双引号的情况，并使用 JSON 解析器从标准输入读取数据并输出 name。
+
+\subsubsection*{实验步骤与分析}
+首先使用带有非贪婪和转义处理的正则提取 name 字段：
+\begin{lstlisting}
+"name"\s*:\s*"((?:\\.|[^"\\])*)"
+\end{lstlisting}
+该模式允许字段值中出现经过 JSON 转义的双引号。随后使用 Python 的 \verb|json| 模块读取标准输入，并通过 \verb|json.load| 访问 name 字段。解析器能够遵守完整 JSON 语法，适合实际实现。
+
+\subsubsection*{实验结果与解释}
+\screenshot{practice10_regex.png}{课后练习十：正则提取 JSON 中的 name 字段}
+\screenshot{practice10_json_parser.png}{课后练习十：使用 Python JSON 解析器输出 name}
+正则方法能够提取普通姓名并处理转义双引号；JSON 解析器输出了相同字段值。比较两种方法可以看出，正则适合演示字符串模式匹配，而实际处理结构化 JSON 时应优先使用专用解析器。
 \section{实验总结与感悟}
 
-本周实验围绕代码质量、增量构建、数据处理与软件交付展开。第13题通过 pytest、
+本周实验围绕代码质量、增量构建、数据处理、软件交付和自动化协作展开。第13题通过 pytest、
 ruff 和 check.sh 建立了可重复执行的本地质量门禁，使代码格式、静态检查和功能测试
 能够由统一命令完成。第14题通过 Makefile 声明文件之间的依赖关系，验证了 Make
 能够根据源文件变化只重建必要产物，从而提高构建效率。
@@ -384,7 +531,11 @@ ruff 和 check.sh 建立了可重复执行的本地质量门禁，使代码格�
 第16题则将错误复现、测试失败、代码修复、质量验证、构建 wheel 和计算 SHA-256
 校验值串联起来，形成了较完整的软件交付流程。
 
-通过本周实验，进一步理解了自动化检查、构建脚本和校验机制在软件开发中的作用。
-代码不仅应当能够运行，还应当具备明确的测试依据、可重复的构建过程和可验证的交付产物。
+课后练习进一步补充了 pre-commit、覆盖率、持续集成、Semgrep 和 JSON 解析等方法。
+这些练习使我认识到，质量控制应当贯穿开发、测试、提交和交付的全过程；AI agent
+可以参与格式修复和测试设计，但其结果仍需通过命令执行、覆盖率数据和人工审查进行
+验证。代码不仅应当能够运行，还应当具备明确的测试依据、可重复的构建过程和可验证
+的交付产物。
 
 \end{document}
+
