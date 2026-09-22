@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demo-pkg-24160001055"
+version = "0.1.0"
+description = "A small package for system development tools practice"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31"
+]
+
+[project.scripts]
+demo-greet = "demo_pkg.cli:main"

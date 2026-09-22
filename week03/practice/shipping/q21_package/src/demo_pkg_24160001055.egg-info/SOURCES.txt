@@ -1,0 +1,10 @@
+pyproject.toml
+src/demo_pkg/__init__.py
+src/demo_pkg/cli.py
+src/demo_pkg/core.py
+src/demo_pkg_24160001055.egg-info/PKG-INFO
+src/demo_pkg_24160001055.egg-info/SOURCES.txt
+src/demo_pkg_24160001055.egg-info/dependency_links.txt
+src/demo_pkg_24160001055.egg-info/entry_points.txt
+src/demo_pkg_24160001055.egg-info/requires.txt
+src/demo_pkg_24160001055.egg-info/top_level.txt

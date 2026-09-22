@@ -19,3 +19,19 @@ week04/practice/quality-lab/htmlcov/
 week04/practice/quality-lab/.coverage
 week04/practice/quality-lab/.pytest_cache/
 week04/practice/quality-lab/.ruff_cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# LaTeX temporary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.xdv

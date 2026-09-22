@@ -1,0 +1,2 @@
+[console_scripts]
+demo-greet = demo_pkg.cli:main

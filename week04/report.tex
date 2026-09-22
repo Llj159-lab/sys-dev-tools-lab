@@ -1,0 +1,390 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[left=2.5cm,right=2.5cm,top=2.6cm,bottom=2.6cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\pagestyle{fancy}
+\fancyhf{}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.35em}
+\linespread{1.25}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  numbers=none,
+  showstringspaces=false,
+  tabsize=4
+}
+
+\emergencystretch=3em
+
+\newcommand{\screenshot}[2]{
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.94\textwidth]{report_assets/practice/#1}
+  \caption{#2}
+\end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+\vspace*{3.2cm}
+
+{\zihao{1}\bfseries 系统开发工具基础第四周实验报告}
+
+\vfill
+
+{\zihao{3}
+姓名：刘静雅\\[0.8cm]
+学号：24160001055\\[0.8cm]
+日期：2026年9月14日
+}
+
+\vspace*{4.2cm}
+\end{center}
+\end{titlepage}
+
+\clearpage
+\thispagestyle{plain}
+\tableofcontents
+\clearpage
+
+\section{实验环境与目录结构}
+
+本周实验在 WSL 的 Bash 环境中完成，仓库目录为
+\verb|~/sys-dev-tools-lab/week04|。实验主要使用 Python、pytest、ruff、
+Make、curl、jq、Git 等工具，完成代码质量检查、自动化构建、本地 API
+数据处理与软件包交付等任务。
+
+本周实验目录结构如下：
+
+\begin{lstlisting}[language=bash]
+week04/
+|-- q13/
+|-- q14/
+|-- q15/
+|-- q16/
+|-- report_assets/
+|   `-- practice/
+`-- report.tex
+\end{lstlisting}
+
+\section{课上实验}
+
+\subsection{第13题 建立可执行的本地质量门禁}
+
+\subsubsection*{题目原文}
+
+复用第10题完成的 greetlab 包，在 q13 中建立一个轻量本地质量检查。
+
+\begin{itemize}
+  \item 复制 q10 为 q13；在 pyproject.toml 中加入 ruff 和 pytest 的最小配置。
+  \item 补充一个正常姓名测试和一个空白姓名测试，每个测试包含有效断言。
+  \item 运行 ruff format、ruff check 和 pytest，修复全部问题，不得全局忽略规则。
+  \item 编写 check.sh，依次执行 ruff format --check、ruff check 和 pytest；运行并保证返回 0。
+\end{itemize}
+
+\subsubsection*{实验步骤}
+
+首先复用前一周完成的 greetlab 项目，将 q10 复制为 q13。在
+\verb|pyproject.toml| 中补充 pytest 与 ruff 的最小配置，使测试框架能够
+定位 \verb|src| 与 \verb|tests| 目录，同时为代码格式检查和静态检查提供统一规则。
+
+随后补充正常姓名和空白姓名两个测试用例。正常姓名测试验证程序能够输出正确
+问候语；空白姓名测试验证程序能够拒绝无效输入。完成代码修改后，分别运行
+\verb|pytest|、\verb|ruff format --check .| 和 \verb|ruff check|。
+
+最后编写 \verb|check.sh|，将格式检查、静态检查和单元测试串联为一个统一的
+本地质量门禁入口。脚本的核心形式如下：
+
+\begin{lstlisting}[language=bash]
+#!/usr/bin/env bash
+set -euo pipefail
+
+ruff format --check .
+ruff check .
+pytest
+\end{lstlisting}
+
+\subsubsection*{实验结果与分析}
+
+\screenshot{practice13_code.png}{第13题 pyproject.toml 中的 pytest 与 ruff 配置}
+
+截图显示，项目在 \verb|pyproject.toml| 中配置了 pytest 的
+\verb|pythonpath| 与 \verb|testpaths|，并设置了 ruff 的目标 Python 版本、
+行长度和检查规则。这些配置使质量检查可以在项目目录中稳定执行。
+
+\screenshot{practice13_quality_pass.png}{第13题 pytest、ruff format 与 ruff check 通过}
+
+截图显示，pytest 共收集两个测试项目，最终结果为 ``2 passed''。随后
+\texttt{ruff format --check .} 显示全部文件格式正确，\texttt{ruff check} 显示
+``All checks passed!''，说明测试、格式与静态检查均通过。
+
+\screenshot{practice13_check_sh.png}{第13题 check.sh 执行结果与退出码}
+
+截图显示，\verb|check.sh| 成功执行了格式检查、静态检查和测试，最后
+\verb|echo $?| 输出为 0。返回值 0 表明该质量门禁脚本执行成功，可在提交前
+作为统一检查入口使用。
+
+\subsection{第14题 让 Make 只重建真正受影响的产物}
+
+\subsubsection*{题目原文}
+
+在 q14 中按给定内容创建三个源文件，只需完成 Makefile。
+
+给定内容如下：
+
+\begin{lstlisting}[language=bash]
+# data.csv
+name,value
+alpha,2
+beta,3
+gamma,5
+
+# stats.py
+import csv
+with open("data.csv") as f:
+    total = sum(int(r["value"]) for r in csv.DictReader(f))
+open("stats.txt", "w").write(str(total))
+
+# build_report.py
+text = open("report.md").read()
+total = open("stats.txt").read()
+open("report.txt", "w").write(f"{text}\nTotal: {total}\n")
+
+# report.md
+# Data Report
+\end{lstlisting}
+
+\begin{itemize}
+  \item 创建给定的 data.csv、stats.py、build\_report.py 和 report.md。
+  \item 编写 Makefile，包含 all、stats.txt、report.txt 和 clean；准确列出数据文件、脚本和中间产物依赖，并把 all、clean 声明为 .PHONY。
+  \item 验证首次 make 生成两个产物；第二次无改动时不执行配方。
+  \item touch data.csv 后再次 make，确认 stats.txt 和 report.txt 重新生成；clean 只删除生成物。
+\end{itemize}
+
+\subsubsection*{实验步骤}
+
+本题先创建数据文件 \nolinkurl{data.csv}、统计脚本 \nolinkurl{stats.py}、
+报告生成脚本 \nolinkurl{build_report.py} 以及报告标题文件
+\nolinkurl{report.md}。其中，\nolinkurl{stats.py} 用于计算 CSV 文件中数值列的总和，
+\nolinkurl{build_report.py} 用于
+读取统计结果并生成最终报告。
+
+随后编写 Makefile，明确目标文件之间的依赖关系。其核心内容如下：
+
+\begin{lstlisting}[language=make]
+.PHONY: all clean
+
+all: report.txt
+
+stats.txt: data.csv stats.py
+	python3 stats.py
+
+report.txt: stats.txt report.md build_report.py
+	python3 build_report.py
+
+clean:
+	rm -f stats.txt report.txt
+\end{lstlisting}
+
+通过首次执行 \verb|make|、再次执行 \verb|make|、执行
+\verb|touch data.csv| 后重新执行 \verb|make|，可以验证 Make 的增量构建机制。
+最后使用 \verb|make clean| 删除构建产生的中间文件与结果文件。
+
+\subsubsection*{实验结果与分析}
+
+\screenshot{practice14_first_make.png}{第14题首次 make 构建及生成结果}
+
+首次执行 \verb|make| 时，终端依次运行 \texttt{python3 stats.py} 和
+\texttt{python3 build\_report.py}。生成的 \nolinkurl{stats.txt} 内容为 10，
+\nolinkurl{report.txt} 中包含报告标题和 ``Total: 10''，说明数据统计与报告生成均成功完成。
+
+\screenshot{practice14_no_rebuild.png}{第14题第二次 make 未重复构建}
+
+第二次直接运行 \verb|make| 时，终端显示
+``Nothing to be done for `all'.''。这表示源文件没有发生变化，
+目标文件仍然是最新状态，因此 Make 没有重复执行构建命令。
+
+\screenshot{practice14_rebuild_after_touch.png}{第14题更新 data.csv 后重新构建}
+
+执行 \texttt{touch data.csv} 后再次运行 \verb|make|，终端重新执行
+\nolinkurl{stats.py} 与 \nolinkurl{build_report.py}。这是因为数据文件的时间戳更新后，
+\nolinkurl{stats.txt} 以及依赖它的 \nolinkurl{report.txt} 都需要重新生成。
+
+\screenshot{practice14_clean.png}{第14题 make clean 清理结果}
+
+执行 \verb|make clean| 后，终端删除 \verb|stats.txt| 和 \verb|report.txt|。
+随后列出的目录文件中仅保留 Makefile、源数据文件、Python 脚本和 Markdown 文件，
+说明 clean 目标只清理生成物，没有删除源文件。
+
+\subsection{第15题 把本地 API 数据转换为可读报告}
+
+\subsubsection*{题目原文}
+
+在 q15 中创建给定 JSON 和本地 HTTP 服务，再用 curl 与 jq 生成简短 Markdown 报告。
+
+给定 JSON 如下：
+
+\begin{lstlisting}
+[
+  {"name":"alpha","status":"active","downloads":120,"version":"1.2.0"},
+  {"name":"beta","status":"inactive","downloads":900,"version":"2.0.0"},
+  {"name":"gamma","status":"active","downloads":450,"version":"1.5.1"},
+  {"name":"delta","status":"active","downloads":450,"version":"0.9.0"},
+  {"name":"epsilon","status":"active","downloads":80,"version":"3.1.0"}
+]
+\end{lstlisting}
+
+\begin{itemize}
+  \item 把给定 JSON 保存为 packages.json，并在 q15 目录运行 python -m http.server 8000。
+  \item 使用 curl -fsS 获取 http://127.0.0.1:8000/packages.json。
+  \item 使用 jq 筛选 status 为 active 且 downloads 不少于 100 的记录，并按 downloads 降序、name 升序排列。
+  \item 编写 api\_report.sh，把结果生成 summary.md，包含标题和 name/version/downloads 三列表格。
+\end{itemize}
+
+\subsubsection*{实验步骤}
+
+首先将题目给定的 JSON 数据保存为 \verb|packages.json|，并在 q15 目录启动
+本地 HTTP 服务。随后使用 \verb|curl -fsS| 获取本地服务器返回的 JSON 数据，
+再使用 jq 完成筛选、排序和格式化。
+
+脚本 \verb|api_report.sh| 先输出 Markdown 标题与表头，再对 JSON 数组执行
+筛选和排序，最终生成 \verb|summary.md|。筛选逻辑的关键部分如下：
+
+\begin{lstlisting}[language=bash]
+map(select(.status == "active" and .downloads >= 100))
+| sort_by(-.downloads, .name)
+| .[]
+| "| \(.name) | \(.version) | \(.downloads) |"
+\end{lstlisting}
+
+筛选后排除 inactive 的 beta 和 downloads 小于 100 的 epsilon。delta 和
+gamma 的下载量同为 450，因此按照名称升序排列，最终顺序为 delta、gamma、alpha。
+
+\subsubsection*{实验结果与分析}
+
+\screenshot{practice15_curl_jq.png}{第15题 curl 获取本地 JSON 数据}
+
+截图显示，\verb|curl -fsS http://127.0.0.1:8000/packages.json| 能够成功访问
+本地 HTTP 服务，jq 将 JSON 数据格式化输出。该结果说明本地 API 服务和数据文件
+均可正常访问。
+
+\screenshot{practice15_script.png}{第15题 api\_report.sh 脚本内容}
+
+截图显示，脚本使用 \verb|set -euo pipefail| 保证命令执行出现错误时立即停止。
+脚本通过 curl 获取 JSON，再使用 jq 筛选 active 状态且 downloads 不少于 100 的
+记录，并将结果写入 \verb|summary.md|。
+
+\screenshot{practice15_summary.png}{第15题 summary.md 报告结果}
+
+生成的 Markdown 报告包含 name、version、downloads 三列，最终保留
+delta、gamma 和 alpha 三条记录。结果中的排序符合下载量降序、名称升序的要求。
+
+\subsection{第16题 修复并交付一个陌生的小型工具仓库}
+
+\subsubsection*{题目原文}
+
+复用第13题的项目，在 q16 中完成一次 15 分钟综合检查。
+
+\begin{itemize}
+  \item 复制 q13 为 q16 并初始化/继续使用 Git。
+  \item 把问候语实现临时改成始终返回字面量 Hello, name!，运行 check.sh 确认测试失败；随后定位并修复。
+  \item 编写最小 Makefile，包含 check、build 和 clean；check 调用 check.sh，build 生成 wheel。
+  \item 运行 make check 和 make build，计算 wheel 的 SHA-256，并把最终改动提交为一个内容聚焦的 Git 提交。
+\end{itemize}
+
+\subsubsection*{实验步骤}
+
+本题首先将 q13 复制为 q16，并继续使用仓库根目录已有的 Git 管理。随后按题目要求，
+将问候语实现临时改为固定输出 \verb|Hello, name!|，运行 \verb|check.sh| 以复现
+测试失败。
+
+在确认失败后，将输出逻辑修复为根据参数中的姓名输出问候语：
+
+\begin{lstlisting}[language=python]
+print(f"Hello, {name}!")
+\end{lstlisting}
+
+修复完成后重新执行 \verb|check.sh|，确认代码质量检查和两个测试用例均通过。
+
+之后编写最小 Makefile，将检查、构建与清理任务封装为 \verb|make| 目标：
+
+\begin{lstlisting}[language=make]
+.PHONY: check build clean
+
+check:
+	./check.sh
+
+build:
+	python -m build
+
+clean:
+	rm -rf build dist src/*.egg-info
+\end{lstlisting}
+
+最后运行 \verb|make build| 构建源码包和 wheel 包，并通过
+\verb|sha256sum dist/*.whl| 计算 wheel 文件的 SHA-256 校验值。
+
+\subsubsection*{实验结果与分析}
+
+\screenshot{practice16_intentional_fail.png}{第16题故意修改问候语后测试失败}
+
+截图显示，将问候语临时修改为固定文本 \verb|Hello, name!| 后，正常姓名测试失败。
+测试期望输出为 \verb|Hello, Ada!|，但实际输出为 \verb|Hello, name!|，因此触发
+断言错误。该结果说明已有测试能够有效发现功能回归。
+
+\screenshot{practice16_check_pass.png}{第16题修复后 check.sh 通过}
+
+恢复为基于姓名变量输出问候语后，执行 \verb|check.sh| 的结果显示两个测试全部通过。
+终端输出 \verb|exit_code=0|，说明格式检查、静态检查和测试均执行成功。
+
+\screenshot{practice16_makefile.png}{第16题 Makefile 内容}
+
+截图显示，Makefile 中定义了 \verb|check|、\verb|build| 和 \verb|clean| 三个目标。
+其中 check 调用 \verb|check.sh|，build 调用 \verb|python -m build|，clean 用于删除
+构建产生的 build、dist 和 egg-info 文件夹。
+
+\screenshot{practice16_make_build.png}{第16题 make build 构建过程}
+
+截图显示，\verb|make build| 成功调用 \verb|python -m build|，并完成源码包构建流程。
+构建过程中出现 README 文件缺失的警告，但没有导致构建中断，后续仍成功生成了发布产物。
+
+\screenshot{practice16_build_sha256.png}{第16题 wheel 构建完成并计算 SHA-256}
+
+截图显示，构建过程最终成功生成 \verb|.tar.gz| 与 \verb|.whl| 文件。随后使用
+\verb|sha256sum dist/*.whl| 输出 wheel 文件的 SHA-256 校验值。该值可用于验证
+构建产物的完整性，便于后续提交与交付时进行核验。
+
+\section{实验总结与感悟}
+
+本周实验围绕代码质量、增量构建、数据处理与软件交付展开。第13题通过 pytest、
+ruff 和 check.sh 建立了可重复执行的本地质量门禁，使代码格式、静态检查和功能测试
+能够由统一命令完成。第14题通过 Makefile 声明文件之间的依赖关系，验证了 Make
+能够根据源文件变化只重建必要产物，从而提高构建效率。
+
+第15题将 JSON 文件通过本地 HTTP 服务提供，再结合 curl 与 jq 完成数据获取、
+筛选、排序和 Markdown 报告生成，体现了命令行工具在数据处理任务中的组合能力。
+第16题则将错误复现、测试失败、代码修复、质量验证、构建 wheel 和计算 SHA-256
+校验值串联起来，形成了较完整的软件交付流程。
+
+通过本周实验，进一步理解了自动化检查、构建脚本和校验机制在软件开发中的作用。
+代码不仅应当能够运行，还应当具备明确的测试依据、可重复的构建过程和可验证的交付产物。
+
+\end{document}
